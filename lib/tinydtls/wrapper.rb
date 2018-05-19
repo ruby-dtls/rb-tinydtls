@@ -21,7 +21,7 @@ module TinyDTLS
       :DTLS_PSK_KEY,
     ]
 
-    class DTLSContextStruct < FFI::ManagedStruct
+    class DTLSContextStruct < FFI::Struct
       layout :cookie_secret, [:uchar, DTLS_COOKIE_SECRET_LENGTH],
         :cookie_secret_age, :uint32,
         :peers, :pointer,
@@ -29,10 +29,6 @@ module TinyDTLS
         :app, :pointer,
         :h, :pointer,
         :readbuf, [:uchar, DTLS_MAX_BUF]
-
-      def self.release(ptr)
-        Wrapper.dtls_free_context(ptr)
-      end
     end
 
     class DTLSHandlerStruct < FFI::Struct
@@ -53,7 +49,6 @@ module TinyDTLS
 
     attach_function :dtls_init, [], :void
     attach_function :dtls_new_context, [:pointer], :pointer
-    attach_function :dtls_free_context, [:pointer], :void
     attach_function :dtls_handle_message,
       [:pointer, :pointer, :pointer, :int], :int
 
