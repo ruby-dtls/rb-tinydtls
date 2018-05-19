@@ -73,5 +73,12 @@ module TinyDTLS
       [:sa_family_t, :uint16, :pointer], :pointer
     attach_function :dtls_session_addr, [:pointer, Uint16Ptr], :strptr
 
+    def self.dtls_get_app_data(ctx)
+      return ctx[:app]
+    end
+
+    def self.dtls_set_handler(ctx, handler)
+      ctx[:h] = handler
+    end
   end
 end
