@@ -1,10 +1,8 @@
-require "ffi"
-
 module TinyDTLS
   # This module provides a low level FFI wrapper for the relevant
   # tinydtls functions. It might be subject to change thus it is highly
   # recommended to use the high level abstraction layer instead.
-  module FFI
+  module Wrapper
     extend FFI::Library
     ffi_lib "libtinydtls.so"
 
