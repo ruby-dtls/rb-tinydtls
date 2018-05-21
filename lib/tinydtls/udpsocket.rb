@@ -42,12 +42,14 @@ module TinyDTLS
     def bind(host, port)
       super(host, port)
       @thread = Thread.new do
-        data, addr = @socket.recvfrom(Wrapper::DTLS_MAX_BUF)
+        while true
+          data, addr = @socket.recvfrom(Wrapper::DTLS_MAX_BUF)
 
-        # TODO: Is the session memory freed properly?
-        sess = Wrapper::dtls_new_session(@family, addr[1], addr[3])
+          # TODO: Is the session memory freed properly?
+          sess = Wrapper::dtls_new_session(@family, addr[1], addr[3])
 
-        Wrapper::dtls_handle_message(@ctx, sess, data, data.bytesize)
+          Wrapper::dtls_handle_message(@ctx, sess, data, data.bytesize)
+        end
       end
     end
 
