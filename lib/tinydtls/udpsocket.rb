@@ -6,7 +6,7 @@ module TinyDTLS
       portstr = portptr[:value].to_s
 
       ctxobj = Wrapper::DTLSContextStruct.new(ctx)
-      socket = SOCKET_MAP[Wrapper::dtls_get_app_data(ctxobj).to_i]
+      socket, _ = CONTEXT_MAP[Wrapper::dtls_get_app_data(ctxobj).to_i]
 
       socket.send(buf.read_string(len), 0, addrstr, portstr)
     end
@@ -18,11 +18,13 @@ module TinyDTLS
 
     def initialize(address_family)
       Wrapper::dtls_init
+
+      @queue  = Queue.new
       @family = address_family
 
       @socket = super(@family)
       socket_id = @socket.object_id
-      SOCKET_MAP[socket_id] = @socket
+      CONTEXT_MAP[socket_id] = [@socket, @queue]
 
       cptr = Wrapper::dtls_new_context(
         FFI::Pointer.new(socket_id))
