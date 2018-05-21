@@ -12,8 +12,11 @@ module TinyDTLS
     end
 
     Read = Proc.new do |ctx, sess, buf, len|
-      # TODO: store data in queue
-      puts "Received new data"
+      ctxobj = Wrapper::DTLSContextStruct.new(ctx)
+      _, queue = CONTEXT_MAP[Wrapper::dtls_get_app_data(ctxobj).to_i]
+
+      str = buf.read_string(len)
+      queue.push(str)
     end
 
     def initialize(address_family)
