@@ -17,6 +17,11 @@ module TinyDTLS
 
       str = buf.read_string(len)
       queue.push(str)
+
+      # It is unclear to me why this callback even needs a return value,
+      # the `tests/dtls-client.c` program in the tinydtls repository
+      # simply uses 0 as a return value, so let's do that as well.
+      0
     end
 
     def initialize(address_family)
