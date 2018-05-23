@@ -62,9 +62,5 @@ module TinyDTLS
       msg = @queue.pop
       return maxlen >= 0 ? msg.byteslice(0, maxlen) : msg
     end
-
-    def wait
-      @thread.join
-    end
   end
 end
