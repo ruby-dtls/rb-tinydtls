@@ -1,5 +1,5 @@
 module TinyDTLS
-  class UDPSocket < UDPSocket
+  class UDPSocket
     Write = Proc.new do |ctx, sess, buf, len|
       portptr = Wrapper::Uint16Ptr.new
       addrstr, addrptr = Wrapper::dtls_session_addr(sess, portptr)
@@ -30,7 +30,7 @@ module TinyDTLS
       @queue  = Queue.new
       @family = address_family
 
-      @socket = super(@family)
+      @socket = ::UDPSocket.new(@family)
       socket_id = @socket.object_id
       CONTEXT_MAP[socket_id] = [@socket, @queue]
 
@@ -45,7 +45,7 @@ module TinyDTLS
     end
 
     def bind(host, port)
-      super(host, port)
+      @socket.bind(host, port)
       @thread = Thread.new do
         while true
           data, addr = @socket.recvfrom(Wrapper::DTLS_MAX_BUF)
