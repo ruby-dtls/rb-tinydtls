@@ -86,7 +86,7 @@ module TinyDTLS
       end
     end
 
-    def recvfrom(maxlen = -1)
+    def recvfrom(maxlen = -1, flags = 0)
       ary = @queue.pop
 
       pay = ary.first
