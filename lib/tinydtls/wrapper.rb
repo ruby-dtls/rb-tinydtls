@@ -40,7 +40,7 @@ module TinyDTLS
         callback([:pointer, :pointer, :alert_level, :ushort], :int),
       :get_psk_info,
         callback([:pointer, :pointer, :credential_type,
-                  :uchar, :size_t, :pointer, :size_t], :int),
+                  :pointer, :size_t, :pointer, :size_t], :int),
       :get_ecdsa_key,
         callback([:pointer, :pointer, :pointer], :int),
       :verify_ecdsa_key,
