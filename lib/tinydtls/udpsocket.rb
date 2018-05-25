@@ -21,6 +21,27 @@ module TinyDTLS
       0
     end
 
+    GetPSKInfo = Proc.new do |ctx, sess, type, desc, dlen, result, rlen|
+      ctxobj = TinyDTLS::Context.from_ptr(ctx)
+      if desc.null?
+        key = ctxobj.default_key
+      end
+
+      if type == :DTLS_PSK_KEY
+        key ||= ctxobj.get_key(desc.read_string(dlen))
+        if key.nil?
+          Wrapper::dtls_alert_fatal_create(:DTLS_ALERT_DECRYPT_ERROR)
+        elsif key.bytesize > rlen
+          Wrapper::dtls_alert_fatal_create(:DTLS_ALERT_INTERNAL_ERROR)
+        else
+          result.put_bytes(0, key)
+          key.bytesize
+        end
+      else
+        0
+      end
+    end
+
     def initialize(address_family)
       Wrapper::dtls_init
 
@@ -37,8 +58,13 @@ module TinyDTLS
 
       @handler = Wrapper::DTLSHandlerStruct.new
       @handler[:write] = UDPSocket::Write
-      @handler[:read]  = UDPSocket::Read
+      @handler[:read] = UDPSocket::Read
+      @handler[:get_psk_info] = UDPSocket::GetPSKInfo
       Wrapper::dtls_set_handler(@ctx, @handler)
+    end
+
+    def add_key(key, identity = nil)
+      CONTEXT_MAP[@socket.object_id].add_key(identity, key)
     end
 
     def bind(host, port)
