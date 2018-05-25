@@ -77,6 +77,10 @@ module TinyDTLS
     attach_function :dtls_handle_message,
       [:pointer, :pointer, :pointer, :int], :int
 
+    def self.dtls_alert_fatal_create(desc)
+      return -((2 << 8) | desc)
+    end
+
     # This type is needed for the `dtls_session_addr` wrapper.
     # See https://github.com/ffi/ffi/wiki/Pointers#passing-by-reference
     class Uint16Ptr < FFI::Struct
