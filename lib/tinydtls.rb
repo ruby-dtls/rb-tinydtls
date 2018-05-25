@@ -2,6 +2,7 @@ require "socket"
 require "ffi"
 
 require "tinydtls/wrapper"
+require "tinydtls/context"
 require "tinydtls/udpsocket"
 
 module TinyDTLS

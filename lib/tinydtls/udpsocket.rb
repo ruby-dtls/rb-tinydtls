@@ -5,18 +5,15 @@ module TinyDTLS
       addrstr, addrptr = Wrapper::dtls_session_addr(sess, portptr)
       portstr = portptr[:value].to_s
 
-      ctxobj = Wrapper::DTLSContextStruct.new(ctx)
-      socket, _ = CONTEXT_MAP[Wrapper::dtls_get_app_data(ctxobj).to_i]
-
-      socket.send(buf.read_string(len), 0, addrstr, portstr)
+      ctxobj = TinyDTLS::Context.from_ptr(ctx)
+      ctxobj.socket.send(buf.read_string(len), 0, addrstr, portstr)
     end
 
     Read = Proc.new do |ctx, sess, buf, len|
-      ctxobj = Wrapper::DTLSContextStruct.new(ctx)
-      _, queue = CONTEXT_MAP[Wrapper::dtls_get_app_data(ctxobj).to_i]
+      ctxobj = TinyDTLS::Context.from_ptr(ctx)
 
       str = buf.read_string(len)
-      queue.push(str)
+      ctxobj.queue.push(str)
 
       # It is unclear to me why this callback even needs a return value,
       # the `tests/dtls-client.c` program in the tinydtls repository
@@ -32,7 +29,7 @@ module TinyDTLS
 
       @socket = ::UDPSocket.new(@family)
       socket_id = @socket.object_id
-      CONTEXT_MAP[socket_id] = [@socket, @queue]
+      CONTEXT_MAP[socket_id] = TinyDTLS::Context.new(@socket, @queue)
 
       cptr = Wrapper::dtls_new_context(
         FFI::Pointer.new(socket_id))
