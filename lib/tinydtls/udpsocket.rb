@@ -10,10 +10,15 @@ module TinyDTLS
     end
 
     Read = Proc.new do |ctx, sess, buf, len|
-      ctxobj = TinyDTLS::Context.from_ptr(ctx)
+      portptr = Wrapper::Uint16Ptr.new
+      addrstr, _ = Wrapper::dtls_session_addr(sess, portptr)
 
-      str = buf.read_string(len)
-      ctxobj.queue.push(str)
+      addrinfo = Socket.getaddrinfo(addrstr, nil).first
+      addr = [addrinfo[0], portptr[:value].to_i,
+              addrinfo[2], addrinfo[3]]
+
+      ctxobj = TinyDTLS::Context.from_ptr(ctx)
+      ctxobj.queue.push([buf.read_string(len), addr])
 
       # It is unclear to me why this callback even needs a return value,
       # the `tests/dtls-client.c` program in the tinydtls repository
@@ -82,8 +87,14 @@ module TinyDTLS
     end
 
     def recvfrom(maxlen = -1)
-      msg = @queue.pop
-      return maxlen >= 0 ? msg.byteslice(0, maxlen) : msg
+      ary = @queue.pop
+
+      pay = ary.first
+      if maxlen >= 0
+        pay = pay.byteslice(0, maxlen)
+      end
+
+      return [pay, ary.last]
     end
   end
 end
