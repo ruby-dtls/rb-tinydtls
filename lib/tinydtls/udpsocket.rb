@@ -2,7 +2,7 @@ module TinyDTLS
   class UDPSocket
     Write = Proc.new do |ctx, sess, buf, len|
       portptr = Wrapper::Uint16Ptr.new
-      addrstr, addrptr = Wrapper::dtls_session_addr(sess, portptr)
+      addrstr, _ = Wrapper::dtls_session_addr(sess, portptr)
       portstr = portptr[:value].to_s
 
       ctxobj = TinyDTLS::Context.from_ptr(ctx)
