@@ -86,12 +86,26 @@ module TinyDTLS
       end
     end
 
-    def recvfrom(maxlen = -1, flags = 0)
+    def recvfrom(len = -1, flags = 0)
       ary = @queue.pop
+      return [Util::byteslice(ary.first, len), ary.last]
+    end
 
-      pay = ary.first
-      if maxlen >= 0
-        pay = pay.byteslice(0, maxlen)
+    def recvfrom_nonblock(len = -1, flag = 0, outbuf = nil, exception: true)
+      ary = nil
+      begin
+        ary = @queue.pop(true)
+      rescue ThreadError
+        if exception
+          raise IO::EAGAINWaitReadable
+        else
+          return :wait_readable
+        end
+      end
+
+      pay = Util::byteslice(ary.first, len)
+      unless outbuf.nil?
+        outbuf << pay
       end
 
       return [pay, ary.last]
