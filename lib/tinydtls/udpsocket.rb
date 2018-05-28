@@ -88,6 +88,18 @@ module TinyDTLS
       end
     end
 
+    # TODO: close_{read,write}
+
+    def close
+      @thread.kill
+      super
+
+      # Assuming the thread is already stopped and this point
+      # we can safely access the CONTEXT_MAP without running
+      # into any kind of concurrency problems.
+      CONTEXT_MAP.delete(object_id)
+    end
+
     def connect(host, port)
       @defdst = Addrinfo.getaddrinfo(host, port, nil, :DGRAM).first
     end
