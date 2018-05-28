@@ -9,4 +9,7 @@ socket.add_key("foobar", "foobar")
 while true
   msg = socket.recvfrom
   puts "Received: #{msg}"
+
+  addr = msg.last
+  socket.send(msg.first, 0, addr[2], addr[1])
 end
