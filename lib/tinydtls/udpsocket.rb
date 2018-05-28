@@ -47,7 +47,7 @@ module TinyDTLS
       end
     end
 
-    def initialize(address_family)
+    def initialize(address_family = Socket::AF_INET)
       Wrapper::dtls_init
 
       @queue  = Queue.new
