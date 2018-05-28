@@ -76,6 +76,8 @@ module TinyDTLS
     attach_function :dtls_new_context, [:pointer], :pointer
     attach_function :dtls_handle_message,
       [:pointer, :pointer, :pointer, :int], :int
+    attach_function :dtls_write,
+      [:pointer, :pointer, :pointer, :size_t], :int
 
     def self.dtls_alert_fatal_create(desc)
       return -((2 << 8) | desc)
