@@ -52,6 +52,7 @@ module TinyDTLS
 
       @queue  = Queue.new
       @family = address_family
+      @defdst = nil
 
       @socket = ::UDPSocket.new(@family)
       socket_id = @socket.object_id
@@ -86,6 +87,10 @@ module TinyDTLS
       end
     end
 
+    def connect(host, port)
+      @defdst = Addrinfo.getaddrinfo(host, port, nil, :DGRAM).first
+    end
+
     def recvfrom(len = -1, flags = 0)
       ary = @queue.pop
       return [Util::byteslice(ary.first, len), ary.last]
@@ -109,6 +114,27 @@ module TinyDTLS
       end
 
       return [pay, ary.last]
+    end
+
+    def send(mesg, flags)
+      if @defdst.nil?
+        raise Errno::EDESTADDRREQ
+      end
+
+      return Util::dtls_send(@ctx, mesg, @defdst)
+    end
+
+    def send(mesg, flags, sockaddr_to)
+      addr, port = Socket.unpack_sockaddr_in(sockaddr_to)
+      return send(mesg, flags, addr, port)
+    end
+
+    def send(mesg, flags, host, port)
+      return Util::dtls_send(
+        @ctx,
+        mesg,
+        Addrinfo.getaddrinfo(host, port, nil, :DGRAM).first
+      )
     end
   end
 end
