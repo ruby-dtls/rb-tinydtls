@@ -2,8 +2,8 @@ module TinyDTLS
   # The class Context stores all per-connection information,
   # it is exclusively used in the `TinyDTLS::CONTEXT_MAP`.
   class Context
-    # The underlying UDP socket object.
-    attr_reader :socket
+    # The method used for sending data on the socket.
+    attr_reader :sendfn
 
     # The queue used for communication with the receive thread.
     attr_reader :queue
@@ -11,8 +11,8 @@ module TinyDTLS
     # The default key, used when the request didn't contain a hint.
     attr_reader :default_key
 
-    def initialize(socket, queue)
-      @socket = socket
+    def initialize(sendfn, queue)
+      @sendfn = sendfn
       @queue  = queue
 
       @idmap = Hash.new

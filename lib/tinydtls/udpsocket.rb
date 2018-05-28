@@ -1,12 +1,12 @@
 module TinyDTLS
-  class UDPSocket
+  class UDPSocket < ::UDPSocket
     Write = Proc.new do |ctx, sess, buf, len|
       portptr = Wrapper::Uint16Ptr.new
       addrstr, _ = Wrapper::dtls_session_addr(sess, portptr)
       portstr = portptr[:value].to_s
 
       ctxobj = TinyDTLS::Context.from_ptr(ctx)
-      ctxobj.socket.send(buf.read_string(len), 0, addrstr, portstr)
+      ctxobj.sendfn.call(buf.read_string(len), 0, addrstr, portstr)
     end
 
     Read = Proc.new do |ctx, sess, buf, len|
@@ -48,18 +48,18 @@ module TinyDTLS
     end
 
     def initialize(address_family = Socket::AF_INET)
+      super(address_family)
       Wrapper::dtls_init
 
       @queue  = Queue.new
       @family = address_family
       @defdst = nil
+      @sendfn = method(:send).super_method
 
-      @socket = ::UDPSocket.new(@family)
-      socket_id = @socket.object_id
-      CONTEXT_MAP[socket_id] = TinyDTLS::Context.new(@socket, @queue)
+      id = object_id
+      CONTEXT_MAP[id] = TinyDTLS::Context.new(@sendfn, @queue)
 
-      cptr = Wrapper::dtls_new_context(
-        FFI::Pointer.new(socket_id))
+      cptr = Wrapper::dtls_new_context(FFI::Pointer.new(id))
       @ctx = Wrapper::DTLSContextStruct.new(cptr)
 
       @handler = Wrapper::DTLSHandlerStruct.new
@@ -70,14 +70,15 @@ module TinyDTLS
     end
 
     def add_key(key, identity = nil)
-      CONTEXT_MAP[@socket.object_id].add_key(identity, key)
+      CONTEXT_MAP[object_id].add_key(identity, key)
     end
 
     def bind(host, port)
-      @socket.bind(host, port)
+      super(host, port)
       @thread = Thread.new do
         while true
-          data, addr = @socket.recvfrom(Wrapper::DTLS_MAX_BUF)
+          data, addr = method(:recvfrom).super_method
+            .call(Wrapper::DTLS_MAX_BUF)
 
           # TODO: Is the session memory freed properly?
           sess = Wrapper::dtls_new_session(@family, addr[1], addr[3])
