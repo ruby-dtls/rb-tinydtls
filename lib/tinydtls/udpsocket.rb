@@ -57,7 +57,6 @@ module TinyDTLS
 
       @queue  = Queue.new
       @family = address_family
-      @defdst = nil
       @sendfn = method(:send).super_method
 
       id = object_id
@@ -103,7 +102,8 @@ module TinyDTLS
     end
 
     def connect(host, port)
-      @defdst = Addrinfo.getaddrinfo(host, port, nil, :DGRAM).first
+      @defhost = host
+      @defport = port
     end
 
     def recvfrom(len = -1, flags = 0)
@@ -131,25 +131,47 @@ module TinyDTLS
       return [pay, ary.last]
     end
 
-    def send(mesg, flags)
-      if @defdst.nil?
-        raise Errno::EDESTADDRREQ
+    def send(mesg, flags, host = nil, port = nil)
+      if host.nil? and port.nil?
+        if @defport.nil? or @defhost.nil?
+          raise Errno::EDESTADDRREQ
+        end
+
+        host = @defhost
+        port = @defport
+      elsif port.nil? # host is not nil and must be a sockaddr_to
+        port, host = Socket.unpack_sockaddr_in(host)
       end
 
-      return Util::dtls_send(@ctx, mesg, @defdst)
-    end
+      addr = Addrinfo.getaddrinfo(host, port, nil, :DGRAM).first
+      sess = Wrapper::dtls_new_session(
+        addr.afamily, addr.ip_port, addr.ip_address)
 
-    def send(mesg, flags, sockaddr_to)
-      addr, port = Socket.unpack_sockaddr_in(sockaddr_to)
-      return send(mesg, flags, addr, port)
-    end
+      res = Wrapper::dtls_connect(@ctx, sess)
+      if res > 0
+        start_thread
+      elsif res == 0
+        # TODO: What should we do if the channel already exists?
+      elsif res < 0
+        raise Errno::ECONNABORTED
+      end
 
-    def send(mesg, flags, host, port)
-      return Util::dtls_send(
-        @ctx,
-        mesg,
-        Addrinfo.getaddrinfo(host, port, nil, :DGRAM).first
-      )
+      # If res is greater than zero a new handshake needs to be performed
+      # by the thread started using the `start_thread` function. We
+      # need to block here until the handshake was completed.
+      #
+      # The current approach is calling `Wrapper::dtls_write` until it
+      # succeeds which is suboptimal because it doesn't take into a
+      # account that the handshake may fail.
+      until (res = Wrapper::dtls_write(@ctx, sess, mesg, mesg.bytesize)) > 0
+        if res == -1
+          raise Errno::EIO
+        end
+
+        sleep 1
+      end
+
+      return res
     end
 
     private
