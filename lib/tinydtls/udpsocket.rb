@@ -73,6 +73,14 @@ module TinyDTLS
       Wrapper::dtls_set_handler(@ctx, @handler)
     end
 
+    def default_id
+      CONTEXT_MAP[object_id].default_id
+    end
+
+    def default_id=(identity)
+      CONTEXT_MAP[object_id].default_id = identity
+    end
+
     def add_key(key, identity = nil)
       CONTEXT_MAP[object_id].add_key(identity, key)
     end
