@@ -87,17 +87,7 @@ module TinyDTLS
 
     def bind(host, port)
       super(host, port)
-      @thread = Thread.new do
-        while true
-          data, addr = method(:recvfrom).super_method
-            .call(Wrapper::DTLS_MAX_BUF)
-
-          # TODO: Is the session memory freed properly?
-          sess = Wrapper::dtls_new_session(@family, addr[1], addr[3])
-
-          Wrapper::dtls_handle_message(@ctx, sess, data, data.bytesize)
-        end
-      end
+      start_thread
     end
 
     # TODO: close_{read,write}
@@ -161,5 +151,22 @@ module TinyDTLS
         Addrinfo.getaddrinfo(host, port, nil, :DGRAM).first
       )
     end
+
+    private
+
+    def start_thread
+      @thread ||= Thread.new do
+        while true
+          data, addr = method(:recvfrom).super_method
+            .call(Wrapper::DTLS_MAX_BUF)
+
+          # TODO: Is the session memory freed properly?
+          sess = Wrapper::dtls_new_session(@family, addr[1], addr[3])
+
+          Wrapper::dtls_handle_message(@ctx, sess, data, data.bytesize)
+        end
+      end
+    end
+
   end
 end
