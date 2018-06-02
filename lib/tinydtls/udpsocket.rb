@@ -42,6 +42,10 @@ module TinyDTLS
           result.put_bytes(0, key)
           key.bytesize
         end
+      elsif type == :DTLS_PSK_IDENTITY
+        identity = ctxobj.default_id
+        result.put_bytes(0, identity)
+        identity.bytesize
       else
         0
       end
