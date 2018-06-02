@@ -35,5 +35,17 @@ module TinyDTLS
     def get_key(identity)
       @idmap[identity]
     end
+
+    def default_id=(identity)
+      @default_id = identity
+    end
+
+    def default_id
+      if @default_id.nil?
+        @idmap.to_a.first.first
+      else
+        @default_id
+      end
+    end
   end
 end
