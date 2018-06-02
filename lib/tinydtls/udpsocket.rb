@@ -92,7 +92,7 @@ module TinyDTLS
     # TODO: close_{read,write}
 
     def close
-      @thread.kill
+      @thread.kill unless @thread.nil?
       super
 
       # Assuming the thread is already stopped and this point
