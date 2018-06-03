@@ -10,12 +10,7 @@ module TinyDTLS
     DTLS_COOKIE_SECRET_LENGTH = 12
     DTLS_MAX_BUF = 1400
 
-    enum :alert_level, [
-      :DTLS_ALERT_LEVEL_WARNING, 1,
-      :DTLS_ALERT_LEVEL_FATAL, 2,
-    ]
-
-    enum :alert, [
+    Alert = enum(
       :DTLS_ALERT_CLOSE_NOTIFY, 0,
       :DTLS_ALERT_UNEXPECTED_MESSAGE, 10,
       :DTLS_ALERT_BAD_RECORD_MAC, 20,
@@ -38,6 +33,11 @@ module TinyDTLS
       :DTLS_ALERT_USER_CANCELED, 90,
       :DTLS_ALERT_NO_RENEGOTIATION, 100,
       :DTLS_ALERT_UNSUPPORTED_EXTENSION, 110
+    )
+
+    enum :alert_level, [
+      :DTLS_ALERT_LEVEL_WARNING, 1,
+      :DTLS_ALERT_LEVEL_FATAL, 2,
     ]
 
     enum :credential_type, [
