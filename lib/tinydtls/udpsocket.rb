@@ -101,7 +101,7 @@ module TinyDTLS
       @thread.kill unless @thread.nil?
       super
 
-      # Assuming the thread is already stopped and this point
+      # Assuming the thread is already stopped at this point
       # we can safely access the CONTEXT_MAP without running
       # into any kind of concurrency problems.
       CONTEXT_MAP.delete(object_id)
