@@ -6,7 +6,6 @@ class TestUDPSocket < Minitest::Test
   # TODO:
   #   1. Make it work with TEST_HOST == "localhost"
   #   2. Make it work without TEST_ID
-  #   3. Make it work with UTF8 test strings
 
   TEST_HOST = "127.0.0.1".freeze
   TEST_PSK  = "foobar".freeze
@@ -59,6 +58,15 @@ class TestUDPSocket < Minitest::Test
     @client_socket.connect(TEST_HOST, TEST_SERVER_PORT)
     assert_equal teststr.bytesize,
       @client_socket.send(teststr, 0)
+
+    assert_msg teststr, @server_socket.recvfrom
+  end
+
+  def test_send_non_ascii
+    teststr = "käsekuchen"
+
+    assert_equal teststr.bytesize,
+      @client_socket.send(teststr, 0, TEST_HOST, TEST_SERVER_PORT)
 
     assert_msg teststr, @server_socket.recvfrom
   end
