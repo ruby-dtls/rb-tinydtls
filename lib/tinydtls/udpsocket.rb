@@ -1,5 +1,8 @@
 module TinyDTLS
   class UDPSocket < ::UDPSocket
+    # Character encoding used for strings.
+    ENCODING = "UTF-8".freeze
+
     Write = Proc.new do |ctx, sess, buf, len|
       portptr = Wrapper::Uint16Ptr.new
       addrstr, _ = Wrapper::dtls_session_addr(sess, portptr)
@@ -18,7 +21,8 @@ module TinyDTLS
               addrinfo[2], addrinfo[3]]
 
       ctxobj = TinyDTLS::Context.from_ptr(ctx)
-      ctxobj.queue.push([buf.read_string(len), addr])
+      ctxobj.queue.push([buf.read_string(len)
+        .force_encoding(ENCODING), addr])
 
       # It is unclear to me why this callback even needs a return value,
       # the `tests/dtls-client.c` program in the tinydtls repository
