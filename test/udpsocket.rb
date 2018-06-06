@@ -62,4 +62,15 @@ class TestUDPSocket < Minitest::Test
 
     assert_msg teststr, @server_socket.recvfrom
   end
+
+  def test_send_multiple
+    teststrs = ["foo", "bar", "baz", "123"]
+
+    teststrs.each do |teststr|
+      assert_equal teststr.bytesize,
+        @client_socket.send(teststr, 0, TEST_HOST, TEST_SERVER_PORT)
+
+      assert_msg teststr, @server_socket.recvfrom
+    end
+  end
 end
