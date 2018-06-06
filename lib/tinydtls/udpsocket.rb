@@ -149,21 +149,14 @@ module TinyDTLS
       sess = Wrapper::dtls_new_session(
         addr.afamily, addr.ip_port, addr.ip_address)
 
-      res = Wrapper::dtls_connect(@ctx, sess)
-      if res > 0
-        start_thread
-      elsif res == 0
-        # TODO: What should we do if the channel already exists?
-      elsif res < 0
-        raise Errno::ECONNABORTED
-      end
+      start_thread # Start thread, if it hasn't been started already
 
-      # If res is greater than zero a new handshake needs to be performed
-      # by the thread started using the `start_thread` function. We
-      # need to block here until the handshake was completed.
+      # If a new thread has been started above a new handshake needs to
+      # be performed by it. We need to block here until the handshake
+      # was completed.
       #
       # The current approach is calling `Wrapper::dtls_write` until it
-      # succeeds which is suboptimal because it doesn't take into a
+      # succeeds which is suboptimal because it doesn't take into
       # account that the handshake may fail.
       until (res = Wrapper::dtls_write(@ctx, sess, mesg, mesg.bytesize)) > 0
         if res == -1
