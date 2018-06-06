@@ -9,7 +9,9 @@ module TinyDTLS
       portstr = portptr[:value].to_s
 
       ctxobj = TinyDTLS::Context.from_ptr(ctx)
-      ctxobj.sendfn.call(buf.read_string(len), 0, addrstr, portstr)
+      ctxobj.sendfn.call(buf.read_string(len),
+                         Socket::MSG_DONTWAIT,
+                         addrstr, portstr)
     end
 
     Read = Proc.new do |ctx, sess, buf, len|
