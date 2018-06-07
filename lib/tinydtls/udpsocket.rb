@@ -106,15 +106,12 @@ module TinyDTLS
     # TODO: close_{read,write}
 
     def close
-      # dtls_free_context seems to require that the thread is still
-      # running since it seems to send alert messages to peers.
-      #
-      # XXX: Figure out if this could cause concurrency problems.
-      Wrapper::dtls_free_context(@ctx)
-
       @dtls_thread.kill unless @dtls_thread.nil?
       @cleanup_thread.kill unless @cleanup_thread.nil?
 
+      # DTLS free context sends messages to peers so we need to
+      # call it before we actually close the underlying socket.
+      Wrapper::dtls_free_context(@ctx)
       super
 
       # Assuming the thread is already stopped at this point
