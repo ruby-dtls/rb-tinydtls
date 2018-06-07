@@ -3,6 +3,9 @@ module TinyDTLS
     # Character encoding used for strings.
     ENCODING = "UTF-8".freeze
 
+    # Timeout for the cleanup thread in seconds
+    TIMEOUT = 5 * 60
+
     Write = Proc.new do |ctx, sess, buf, len|
       portptr = Wrapper::Uint16Ptr.new
       addrstr, _ = Wrapper::dtls_session_addr(sess, portptr)
@@ -63,10 +66,12 @@ module TinyDTLS
       super(address_family)
       Wrapper::dtls_init
 
-      @queue   = Queue.new
-      @family  = address_family
-      @sendfn  = method(:send).super_method
-      @sessmap = Hash.new
+      @queue  = Queue.new
+      @family = address_family
+      @sendfn = method(:send).super_method
+
+      @sess_hash  = Hash.new
+      @sess_mutex = Mutex.new
 
       id = object_id
       CONTEXT_MAP[id] = TinyDTLS::Context.new(@sendfn, @queue)
@@ -95,7 +100,7 @@ module TinyDTLS
 
     def bind(host, port)
       super(host, port)
-      start_thread
+      start_threads
     end
 
     # TODO: close_{read,write}
@@ -107,7 +112,9 @@ module TinyDTLS
       # XXX: Figure out if this could cause concurrency problems.
       Wrapper::dtls_free_context(@ctx)
 
-      @thread.kill unless @thread.nil?
+      @dtls_thread.kill unless @dtls_thread.nil?
+      @cleanup_thread.kill unless @cleanup_thread.nil?
+
       super
 
       # Assuming the thread is already stopped at this point
@@ -159,15 +166,18 @@ module TinyDTLS
       end
 
       addr = Addrinfo.getaddrinfo(host, port, nil, :DGRAM).first
-      sess = @sessmap[addr]
 
-      if sess.nil?
+      @sess_mutex.lock
+      if @sess_hash.has_key? addr
+        sess, _ = @sess_hash[addr]
+      else
         sess = Wrapper::dtls_new_session(
           addr.afamily, addr.ip_port, addr.ip_address)
-        @sessmap[addr] = sess
+        @sess_hash[addr] = [sess, true]
       end
+      @sess_mutex.unlock
 
-      start_thread # Start thread, if it hasn't been started already
+      start_threads # Start thread, if it hasn't been started already
 
       # If a new thread has been started above a new handshake needs to
       # be performed by it. We need to block here until the handshake
@@ -189,16 +199,64 @@ module TinyDTLS
 
     private
 
-    def start_thread
-      @thread ||= Thread.new do
+    def start_threads
+      start_dtls_thread
+      start_cleanup_thread
+    end
+
+    # Creates a thread responsible for reading from reciving messages
+    # from the underlying socket and passing them to tinydtls.
+    #
+    # The thread is only created once.
+    def start_dtls_thread
+      @dtls_thread ||= Thread.new do
         while true
           data, addr = method(:recvfrom).super_method
             .call(Wrapper::DTLS_MAX_BUF)
 
           # TODO: Is the session memory freed properly?
           sess = Wrapper::dtls_new_session(@family, addr[1], addr[3])
+          # TODO: Interact with the @sess_hash
 
+          @sess_mutex.lock
           Wrapper::dtls_handle_message(@ctx, sess, data, data.bytesize)
+          @sess_mutex.unlock
+        end
+      end
+    end
+
+    # Creates a thread responsible for freeing ressources assigned to
+    # stale connection. This thread implements the clock hand algorithm
+    # as described in Modern Operating Systems, p. 212.
+    #
+    # The thread is only created once.
+    def start_cleanup_thread
+      @cleanup_thread ||= Thread.new do
+        while true
+          sleep TIMEOUT
+
+          @sess_mutex.lock
+          @sess_hash.transform_values! do |value|
+            sess, used = value
+            if used
+              [sess, !used]
+            else # Not used since we've been here last time → free resources
+              peer = Wrapper::dtls_get_peer(@ctx, sess)
+              if peer.nil?
+                raise RuntimeError, "Peer wasn't found"
+              end
+
+              Wrapper::dtls_reset_peer(@ctx, peer)
+
+              # We actually want to delete the element from the map now,
+              # however, that doesn't seem to be possible. Instead assign
+              # nil to it and filter the map again using #reject! later on.
+              nil
+            end
+          end
+
+          @sess_hash.reject! { |_, v| v.nil? }
+          @sess_mutex.unlock
         end
       end
     end
