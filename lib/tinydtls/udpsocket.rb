@@ -3,8 +3,8 @@ module TinyDTLS
     # Character encoding used for strings.
     ENCODING = "UTF-8".freeze
 
-    # Timeout for the cleanup thread in seconds
-    TIMEOUT = 5 * 60
+    # Default timeout for the cleanup thread in seconds.
+    DEFAULT_TIMEOUT = (5 * 60).freeze
 
     Write = Proc.new do |ctx, sess, buf, len|
       portptr = Wrapper::Uint16Ptr.new
@@ -62,13 +62,14 @@ module TinyDTLS
       end
     end
 
-    def initialize(address_family = Socket::AF_INET)
+    def initialize(address_family = Socket::AF_INET, timeout = DEFAULT_TIMEOUT)
       super(address_family)
       Wrapper::dtls_init
 
-      @queue  = Queue.new
-      @family = address_family
-      @sendfn = method(:send).super_method
+      @timeout = timeout.freeze
+      @queue   = Queue.new
+      @family  = address_family
+      @sendfn  = method(:send).super_method
 
       @sess_hash  = Hash.new
       @sess_mutex = Mutex.new
@@ -230,7 +231,7 @@ module TinyDTLS
     def start_cleanup_thread
       @cleanup_thread ||= Thread.new do
         while true
-          sleep TIMEOUT
+          sleep @timeout
 
           @sess_mutex.lock
           @sess_hash.transform_values! do |value|
