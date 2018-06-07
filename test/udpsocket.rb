@@ -8,11 +8,15 @@ class TestUDPSocket < Minitest::Test
   #   2. Make it work without TEST_ID
 
   TEST_HOST = "127.0.0.1".freeze
+  TEST_AFAM = Socket::AF_INET
   TEST_PSK  = "foobar".freeze
   TEST_ID   = "default identity".freeze
 
   TEST_CLIENT_PORT = 2323
   TEST_SERVER_PORT = 4000
+
+  # Reduce the timeout for the test_free_stale_peer method.
+  TEST_TIMEOUT = 5
 
   def assert_msg(pay, msg)
     assert_equal pay, msg.first
@@ -20,11 +24,11 @@ class TestUDPSocket < Minitest::Test
   end
 
   def setup
-    @server_socket = TinyDTLS::UDPSocket.new
+    @server_socket = TinyDTLS::UDPSocket.new(TEST_AFAM)
     @server_socket.bind(TEST_HOST, TEST_SERVER_PORT)
     @server_socket.add_key(TEST_PSK, TEST_ID)
 
-    @client_socket = TinyDTLS::UDPSocket.new
+    @client_socket = TinyDTLS::UDPSocket.new(TEST_AFAM, TEST_TIMEOUT)
     @client_socket.add_key(TEST_PSK, TEST_ID)
   end
 
@@ -80,5 +84,19 @@ class TestUDPSocket < Minitest::Test
 
       assert_msg teststr, @server_socket.recvfrom
     end
+  end
+
+  def test_free_stale_peer
+    @client_socket.send("foobar", 0, TEST_HOST, TEST_SERVER_PORT)
+    assert_equal 1,
+      @client_socket.instance_variable_get("@sess_hash").size
+
+    # We don't really know how long it takes until the thread is
+    # actually scheduled so we just add a few seconds for good
+    # measure.
+    sleep TEST_TIMEOUT + 5
+
+    assert_equal 0,
+      @client_socket.instance_variable_get("@sess_hash").size
   end
 end
