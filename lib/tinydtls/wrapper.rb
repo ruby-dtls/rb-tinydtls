@@ -82,6 +82,9 @@ module TinyDTLS
     attach_function :dtls_connect,
       [:pointer, :pointer], :int
 
+    attach_function :dtls_get_peer, [:pointer, :pointer], :pointer
+    attach_function :dtls_reset_peer, [:pointer, :pointer], :void
+
     def self.dtls_alert_fatal_create(desc)
       return -((2 << 8) | desc)
     end
