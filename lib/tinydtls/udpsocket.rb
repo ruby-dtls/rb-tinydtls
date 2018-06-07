@@ -164,16 +164,7 @@ module TinyDTLS
       end
 
       addr = Addrinfo.getaddrinfo(host, port, nil, :DGRAM).first
-
-      @sess_mutex.lock
-      if @sess_hash.has_key? addr
-        sess, _ = @sess_hash[addr]
-      else
-        sess = Wrapper::dtls_new_session(
-          addr.afamily, addr.ip_port, addr.ip_address)
-        @sess_hash[addr] = [sess, true]
-      end
-      @sess_mutex.unlock
+      sess = get_session(addr)
 
       start_threads # Start thread, if it hasn't been started already
 
@@ -196,6 +187,21 @@ module TinyDTLS
     end
 
     private
+
+    def get_session(addr)
+      @sess_mutex.lock
+      sess = nil
+      if @sess_hash.has_key? addr
+        sess, _ = @sess_hash[addr]
+      else
+        sess = Wrapper::dtls_new_session(
+          addr.afamily, addr.ip_port, addr.ip_address)
+        @sess_hash[addr] = [sess, true]
+      end
+      @sess_mutex.unlock
+
+      return sess
+    end
 
     def start_threads
       start_dtls_thread
