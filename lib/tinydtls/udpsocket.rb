@@ -63,9 +63,10 @@ module TinyDTLS
       super(address_family)
       Wrapper::dtls_init
 
-      @queue  = Queue.new
-      @family = address_family
-      @sendfn = method(:send).super_method
+      @queue   = Queue.new
+      @family  = address_family
+      @sendfn  = method(:send).super_method
+      @sessmap = Hash.new
 
       id = object_id
       CONTEXT_MAP[id] = TinyDTLS::Context.new(@sendfn, @queue)
@@ -158,8 +159,13 @@ module TinyDTLS
       end
 
       addr = Addrinfo.getaddrinfo(host, port, nil, :DGRAM).first
-      sess = Wrapper::dtls_new_session(
-        addr.afamily, addr.ip_port, addr.ip_address)
+      sess = @sessmap[addr]
+
+      if sess.nil?
+        sess = Wrapper::dtls_new_session(
+          addr.afamily, addr.ip_port, addr.ip_address)
+        @sessmap[addr] = sess
+      end
 
       start_thread # Start thread, if it hasn't been started already
 
