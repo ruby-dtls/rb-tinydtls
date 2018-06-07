@@ -190,13 +190,13 @@ module TinyDTLS
 
     def get_session(addr)
       @sess_mutex.lock
-      sess = nil
-      if @sess_hash.has_key? addr
-        sess, _ = @sess_hash[addr]
+      key = addr.getnameinfo
+      if @sess_hash.has_key? key
+        sess, _ = @sess_hash[key]
       else
         sess = Wrapper::dtls_new_session(
           addr.afamily, addr.ip_port, addr.ip_address)
-        @sess_hash[addr] = [sess, true]
+        @sess_hash[key] = [sess, true]
       end
       @sess_mutex.unlock
 
