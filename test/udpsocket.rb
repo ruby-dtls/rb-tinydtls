@@ -94,7 +94,7 @@ class TestUDPSocket < Minitest::Test
     # We don't really know how long it takes until the thread is
     # actually scheduled so we just add a few seconds for good
     # measure.
-    sleep TEST_TIMEOUT + 5
+    sleep 5 * TEST_TIMEOUT
 
     assert_equal 0,
       @client_socket.instance_variable_get("@sess_hash").size
