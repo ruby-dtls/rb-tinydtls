@@ -246,19 +246,22 @@ module TinyDTLS
             else # Not used since we've been here last time → free resources
               peer = Wrapper::dtls_get_peer(@ctx, sess)
               if peer.null?
-                raise RuntimeError, "Peer wasn't found"
+                # dtls_handle_messages already frees peers for us if
+                # it receive an alert message from them. So if we can't
+                # find a peer for the session we don't need to free it.
+                nil
+              else
+                Wrapper::dtls_reset_peer(@ctx, peer)
+                nil
               end
-
-              Wrapper::dtls_reset_peer(@ctx, peer)
-
-              # We actually want to delete the element from the map now,
-              # however, that doesn't seem to be possible. Instead assign
-              # nil to it and filter the map again using #reject! later on.
-              nil
             end
           end
 
+          # We can't delete elements from the map in the #transform_values!
+          # block, we just assign nil to them. Thus we need to filter
+          # the map again here.
           @sess_hash.reject! { |_, v| v.nil? }
+
           @sess_mutex.unlock
         end
       end
