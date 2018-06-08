@@ -246,7 +246,7 @@ module TinyDTLS
               [sess, !used]
             else # Not used since we've been here last time → free resources
               peer = Wrapper::dtls_get_peer(@ctx, sess)
-              if peer.nil?
+              if peer.null?
                 raise RuntimeError, "Peer wasn't found"
               end
 
