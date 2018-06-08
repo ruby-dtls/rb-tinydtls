@@ -164,7 +164,10 @@ module TinyDTLS
       end
 
       addr = Addrinfo.getaddrinfo(host, port, nil, :DGRAM).first
+
+      @sess_mutex.lock
       sess = get_session(addr)
+      @sess_mutex.unlock
 
       start_threads # Start thread, if it hasn't been started already
 
@@ -189,7 +192,6 @@ module TinyDTLS
     private
 
     def get_session(addr)
-      @sess_mutex.lock
       key = addr.getnameinfo
       if @sess_hash.has_key? key
         sess, _ = @sess_hash[key]
@@ -198,7 +200,6 @@ module TinyDTLS
           addr.afamily, addr.ip_port, addr.ip_address)
         @sess_hash[key] = [sess, true]
       end
-      @sess_mutex.unlock
 
       return sess
     end
@@ -217,12 +218,10 @@ module TinyDTLS
         while true
           data, addr = method(:recvfrom).super_method
             .call(Wrapper::DTLS_MAX_BUF)
-
-          # TODO: Is the session memory freed properly?
-          sess = Wrapper::dtls_new_session(@family, addr[1], addr[3])
-          # TODO: Interact with the @sess_hash
+          addrinfo = Addrinfo.getaddrinfo(addr[3], addr[1], nil, :DGRAM).first
 
           @sess_mutex.lock
+          sess = get_session(addrinfo)
           Wrapper::dtls_handle_message(@ctx, sess, data, data.bytesize)
           @sess_mutex.unlock
         end
