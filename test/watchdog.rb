@@ -24,7 +24,18 @@ class TestWatchdog < Utility
     assert_equal [TEST_HOST, TEST_SERVER_PORT.to_s],
       sessions.keys.first
 
-    assert sessions.values.first.last
+    assert_used sessions.values.first
+  end
+
+  def test_peer_marked_as_unused
+    @client_socket.send("barfoo", 0, TEST_HOST, TEST_SERVER_PORT)
+    sessions = get_client_sessions
+
+    assert_equal 1, sessions.size
+    assert_used sessions.values.first
+
+    sleep TEST_TIMEOUT
+    assert_unused sessions.values.first
   end
 
   def test_free_stale_peer

@@ -11,4 +11,12 @@ class Utility < Minitest::Test
     assert_equal pay, msg.first
     assert_equal TEST_HOST, msg.last[2]
   end
+
+  def assert_used(session)
+    assert session.last
+  end
+
+  def assert_unused(session)
+    assert !session.last
+  end
 end
