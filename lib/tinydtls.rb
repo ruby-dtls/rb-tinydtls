@@ -3,7 +3,6 @@ require "ffi"
 
 require "tinydtls/wrapper"
 require "tinydtls/context"
-require "tinydtls/util"
 require "tinydtls/udpsocket"
 
 module TinyDTLS

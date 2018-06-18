@@ -134,7 +134,7 @@ module TinyDTLS
 
     def recvfrom(len = -1, flags = 0)
       ary = @queue.pop
-      return [Util::byteslice(ary.first, len), ary.last]
+      return [byteslice(ary.first, len), ary.last]
     end
 
     def recvfrom_nonblock(len = -1, flag = 0, outbuf = nil, exception: true)
@@ -149,7 +149,7 @@ module TinyDTLS
         end
       end
 
-      pay = Util::byteslice(ary.first, len)
+      pay = byteslice(ary.first, len)
       unless outbuf.nil?
         outbuf << pay
       end
@@ -212,6 +212,10 @@ module TinyDTLS
       end
 
       return sess
+    end
+
+    def byteslice(str, len)
+      return len >= 0 ? str.byteslice(0, len) : str
     end
 
     def start_threads
