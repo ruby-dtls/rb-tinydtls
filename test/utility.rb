@@ -1,5 +1,3 @@
-require "minitest/autorun"
-
 class Utility < Minitest::Test
   TEST_HOST = "127.0.0.1".freeze
   TEST_AFAM = Socket::AF_INET
