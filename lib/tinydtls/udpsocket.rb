@@ -9,7 +9,6 @@ module TinyDTLS
     Write = Proc.new do |ctx, sess, buf, len|
       lenptr = Wrapper::SocklenPtr.new
       sockaddr = Wrapper::dtls_session_addr(sess, lenptr)
-
       port, addr = Socket.unpack_sockaddr_in(
         sockaddr.read_string(lenptr[:value]))
 
@@ -22,10 +21,15 @@ module TinyDTLS
     Read = Proc.new do |ctx, sess, buf, len|
       lenptr = Wrapper::SocklenPtr.new
       sockaddr = Wrapper::dtls_session_addr(sess, lenptr)
-
       port, addr = Socket.unpack_sockaddr_in(
         sockaddr.read_string(lenptr[:value]))
-      addrinfo = Socket.getaddrinfo(addr, port, nil, :DGRAM).first
+
+      # We need to perform a reverse lookup here because
+      # the #recvfrom function needs to return the DNS
+      # hostname which we cannot extract from the sockaddr.
+      addrinfo = Socket.getaddrinfo(addr, port,
+                                    nil, :DGRAM,
+                                    0, 0, true).first
 
       ctxobj = TinyDTLS::Context.from_ptr(ctx)
       ctxobj.queue.push([buf.read_string(len)

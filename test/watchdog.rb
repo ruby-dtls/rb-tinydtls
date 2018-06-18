@@ -21,9 +21,8 @@ class TestWatchdog < Utility
     sessions = get_client_sessions
 
     assert_equal 1, sessions.size
-    # FIXME: does RDNS resolution
-    # assert_equal [TEST_HOST, TEST_SERVER_PORT],
-    #   sessions.keys.first
+    assert_equal [TEST_HOST, TEST_SERVER_PORT.to_s],
+      sessions.keys.first
 
     assert sessions.values.first.last
   end

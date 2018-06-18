@@ -1,7 +1,6 @@
 class TestUDPSocket < Utility
   # TODO:
-  #   1. Make it work with TEST_HOST == "localhost"
-  #   2. Make it work without TEST_ID
+  #   1. Make it work without TEST_ID
 
   def setup
     @server_socket = TinyDTLS::UDPSocket.new(TEST_AFAM)
