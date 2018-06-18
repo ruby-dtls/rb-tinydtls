@@ -1,27 +1,15 @@
 require "socket"
 require "tinydtls"
-require "minitest/autorun"
 
-class TestUDPSocket < Minitest::Test
+require_relative "./utility.rb"
+
+class TestUDPSocket < Utility
   # TODO:
   #   1. Make it work with TEST_HOST == "localhost"
   #   2. Make it work without TEST_ID
 
-  TEST_HOST = "127.0.0.1".freeze
-  TEST_AFAM = Socket::AF_INET
-  TEST_PSK  = "foobar".freeze
-  TEST_ID   = "default identity".freeze
-
-  TEST_CLIENT_PORT = 2323
-  TEST_SERVER_PORT = 4000
-
   # Reduce the timeout for the test_free_stale_peer method.
   TEST_TIMEOUT = 5
-
-  def assert_msg(pay, msg)
-    assert_equal pay, msg.first
-    assert_equal TEST_HOST, msg.last[3]
-  end
 
   def setup
     @server_socket = TinyDTLS::UDPSocket.new(TEST_AFAM)
