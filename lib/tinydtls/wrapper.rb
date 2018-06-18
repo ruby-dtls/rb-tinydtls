@@ -91,8 +91,8 @@ module TinyDTLS
 
     # This type is needed for the `dtls_session_addr` wrapper.
     # See https://github.com/ffi/ffi/wiki/Pointers#passing-by-reference
-    class Uint16Ptr < FFI::Struct
-      layout :value, :uint16
+    class SocklenPtr < FFI::Struct
+      layout :value, :socklen_t
     end
 
     # These functions are not available in vanilla tinydtls.
@@ -100,8 +100,8 @@ module TinyDTLS
     # type possible without creating a ruby wrapper for `struct
     # sockaddr_in{,6}`.
     attach_function :dtls_new_session,
-      [:sa_family_t, :uint16, :pointer], :pointer
-    attach_function :dtls_session_addr, [:pointer, Uint16Ptr], :strptr
+      [:pointer, :socklen_t], :pointer
+    attach_function :dtls_session_addr, [:pointer, SocklenPtr], :pointer
 
     def self.dtls_get_app_data(ctx)
       return ctx[:app]

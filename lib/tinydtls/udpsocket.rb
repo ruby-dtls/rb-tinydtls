@@ -7,27 +7,29 @@ module TinyDTLS
     DEFAULT_TIMEOUT = (5 * 60).freeze
 
     Write = Proc.new do |ctx, sess, buf, len|
-      portptr = Wrapper::Uint16Ptr.new
-      addrstr, _ = Wrapper::dtls_session_addr(sess, portptr)
-      portstr = portptr[:value].to_s
+      lenptr = Wrapper::SocklenPtr.new
+      sockaddr = Wrapper::dtls_session_addr(sess, lenptr)
+
+      port, addr = Socket.unpack_sockaddr_in(
+        sockaddr.read_string(lenptr[:value]))
 
       ctxobj = TinyDTLS::Context.from_ptr(ctx)
       ctxobj.sendfn.call(buf.read_string(len),
                          Socket::MSG_DONTWAIT,
-                         addrstr, portstr)
+                         addr, port)
     end
 
     Read = Proc.new do |ctx, sess, buf, len|
-      portptr = Wrapper::Uint16Ptr.new
-      addrstr, _ = Wrapper::dtls_session_addr(sess, portptr)
+      lenptr = Wrapper::SocklenPtr.new
+      sockaddr = Wrapper::dtls_session_addr(sess, lenptr)
 
-      addrinfo = Socket.getaddrinfo(addrstr, nil).first
-      addr = [addrinfo[0], portptr[:value].to_i,
-              addrinfo[2], addrinfo[3]]
+      port, addr = Socket.unpack_sockaddr_in(
+        sockaddr.read_string(lenptr[:value]))
+      addrinfo = Socket.getaddrinfo(addr, port, nil, :DGRAM).first
 
       ctxobj = TinyDTLS::Context.from_ptr(ctx)
       ctxobj.queue.push([buf.read_string(len)
-        .force_encoding(ENCODING), addr])
+        .force_encoding(ENCODING), addrinfo])
 
       # It is unclear to me why this callback even needs a return value,
       # the `tests/dtls-client.c` program in the tinydtls repository
@@ -197,7 +199,11 @@ module TinyDTLS
         sess, _ = @sess_hash[key]
       else
         sess = Wrapper::dtls_new_session(
-          addr.afamily, addr.ip_port, addr.ip_address)
+          addr.to_sockaddr, addr.to_sockaddr.bytesize)
+        if sess.null?
+          raise Errno::ENOMEM
+        end
+
         @sess_hash[key] = [sess, true]
       end
 
