@@ -77,4 +77,13 @@ class TestUDPSocket < Utility
       assert_msg teststr, @server_socket.recvfrom
     end
   end
+
+  def test_recvfrom_nonblock_empty
+    assert_raises IO::EAGAINWaitReadable do
+      @server_socket.recvfrom_nonblock
+    end
+
+    assert_equal :wait_readable,
+      @server_socket.recvfrom_nonblock(exception: false)
+  end
 end
