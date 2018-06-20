@@ -58,6 +58,12 @@ class TestUDPSocket < Utility
     assert_msg teststr, @server_socket.recvfrom
   end
 
+  def test_send_missing_connect
+    assert_raises Errno::EDESTADDRREQ do
+      @client_socket.send("foobar", 0)
+    end
+  end
+
   def test_send_non_ascii
     teststr = "käsekuchen"
 
