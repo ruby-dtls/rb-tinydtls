@@ -78,6 +78,14 @@ class TestUDPSocket < Utility
     end
   end
 
+  def test_recv_with_maxlen
+    teststr = "kartoffelsalat"
+    @client_socket.send(teststr, 0, TEST_HOST, TEST_SERVER_PORT)
+
+    substr = teststr[0..8] # kartoffel
+    assert_msg substr, @server_socket.recvfrom(substr.length)
+  end
+
   def test_recvfrom_nonblock_empty
     assert_raises IO::EAGAINWaitReadable do
       @server_socket.recvfrom_nonblock
