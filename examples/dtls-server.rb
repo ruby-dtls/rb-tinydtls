@@ -1,10 +1,9 @@
 require "tinydtls"
+require_relative "./keys.rb"
 
-socket = TinyDTLS::UDPSocket.new(Socket::AF_INET6)
-socket.bind("::1", 2342)
-
-socket.add_key("foobar")
-socket.add_key("foobar", "foobar")
+socket = TinyDTLS::UDPSocket.new
+socket.add_key(TEST_IDENTITY, TEST_PSK)
+socket.bind("localhost", 2342)
 
 while true
   msg = socket.recvfrom
