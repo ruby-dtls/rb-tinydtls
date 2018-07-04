@@ -4,32 +4,26 @@ module TinyDTLS
     DEFAULT_TIMEOUT = (5 * 60).freeze
 
     Write = Proc.new do |ctx, sess, buf, len|
-      lenptr = Wrapper::SocklenPtr.new
-      sockaddr = Wrapper::dtls_session_addr(sess, lenptr)
-      port, addr = Socket.unpack_sockaddr_in(
-        sockaddr.read_string(lenptr[:value]))
+      addrinfo = Session.from_ptr(sess).addrinfo
 
       ctxobj = TinyDTLS::Context.from_ptr(ctx)
       ctxobj.sendfn.call(buf.read_string(len),
                          Socket::MSG_DONTWAIT,
-                         addr, port)
+                         addrinfo.ip_address, addrinfo.ip_port)
     end
 
     Read = Proc.new do |ctx, sess, buf, len|
-      lenptr = Wrapper::SocklenPtr.new
-      sockaddr = Wrapper::dtls_session_addr(sess, lenptr)
-      port, addr = Socket.unpack_sockaddr_in(
-        sockaddr.read_string(lenptr[:value]))
+      addrinfo = Session.from_ptr(sess).addrinfo
 
       # We need to perform a reverse lookup here because
       # the #recvfrom function needs to return the DNS
-      # hostname which we cannot extract from the sockaddr.
-      addrinfo = Socket.getaddrinfo(addr, port,
-                                    nil, :DGRAM,
-                                    0, 0, true).first
+      # hostname.
+      sender = Socket.getaddrinfo(addrinfo.ip_address,
+                                  addrinfo.ip_port, nil, :DGRAM,
+                                  0, 0, true).first
 
       ctxobj = TinyDTLS::Context.from_ptr(ctx)
-      ctxobj.queue.push([buf.read_string(len), addrinfo])
+      ctxobj.queue.push([buf.read_string(len), sender])
 
       # It is unclear to me why this callback even needs a return value,
       # the `tests/dtls-client.c` program in the tinydtls repository
@@ -194,7 +188,7 @@ module TinyDTLS
       # The current approach is calling `Wrapper::dtls_write` until it
       # succeeds which is suboptimal because it doesn't take into
       # account that the handshake may fail.
-      until (res = Wrapper::dtls_write(@ctx, sess, mesg, mesg.bytesize)) > 0
+      until (res = Wrapper::dtls_write(@ctx, sess.to_ptr, mesg, mesg.bytesize)) > 0
         if res == -1
           raise Errno::EIO
         end
@@ -212,12 +206,7 @@ module TinyDTLS
       if @sess_hash.has_key? key
         sess, _ = @sess_hash[key]
       else
-        sess = Wrapper::dtls_new_session(
-          addr.to_sockaddr, addr.to_sockaddr.bytesize)
-        if sess.null?
-          raise Errno::ENOMEM
-        end
-
+        sess = Session.new(addr)
         @sess_hash[key] = [sess, true]
       end
 
@@ -251,7 +240,7 @@ module TinyDTLS
 
           @sess_mutex.lock
           sess = get_session(addrinfo)
-          Wrapper::dtls_handle_message(@ctx, sess, data, data.bytesize)
+          Wrapper::dtls_handle_message(@ctx, sess.to_ptr, data, data.bytesize)
           @sess_mutex.unlock
         end
       end
@@ -273,16 +262,8 @@ module TinyDTLS
             if used
               [sess, !used]
             else # Not used since we've been here last time → free resources
-              peer = Wrapper::dtls_get_peer(@ctx, sess)
-              if peer.null?
-                # dtls_handle_messages already frees peers for us if
-                # it receive an alert message from them. So if we can't
-                # find a peer for the session we don't need to free it.
-                nil
-              else
-                Wrapper::dtls_reset_peer(@ctx, peer)
-                nil
-              end
+              sess.destroy!(@ctx)
+              nil
             end
           end
 
