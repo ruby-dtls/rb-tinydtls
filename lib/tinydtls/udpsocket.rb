@@ -157,6 +157,20 @@ module TinyDTLS
       return [pay, ary.last]
     end
 
+    # TODO: The recvmsg functions only implement a subset of the
+    # functionallity of the UDP socket class, e.g. they don't return
+    # ancillary data.
+
+    def recvmsg(maxmesglen = nil, flags = 0, maxcontrollen = nil, opts = {})
+      mesg, sender = recvfrom(maxmesglen.nil? ? -1 : maxmesglen, flags)
+      return [mesg, to_addrinfo(*sender), 0, nil]
+    end
+
+    def recvmsg_nonblock(maxdatalen = nil, flags = 0, maxcontrollen = nil, opts = {})
+      mesg, sender = recvfrom_nonblock(maxdatalen.nil? ? -1 : maxdatalen, flags)
+      return [mesg, to_addrinfo(*sender), 0, nil]
+    end
+
     def send(mesg, flags, host = nil, port = nil)
       if host.nil? and port.nil?
         if @defport.nil? or @defhost.nil?
@@ -214,6 +228,11 @@ module TinyDTLS
       return sess
     end
 
+    def to_addrinfo(*args)
+      af, port, _, addr = args
+      Addrinfo.getaddrinfo(addr, port, af, :DGRAM).first
+    end
+
     def byteslice(str, len)
       return len >= 0 ? str.byteslice(0, len) : str
     end
@@ -232,7 +251,7 @@ module TinyDTLS
         while true
           data, addr = method(:recvfrom).super_method
             .call(Wrapper::DTLS_MAX_BUF)
-          addrinfo = Addrinfo.getaddrinfo(addr[3], addr[1], nil, :DGRAM).first
+          addrinfo = to_addrinfo(*addr)
 
           @sess_mutex.lock
           sess = get_session(addrinfo)
