@@ -70,7 +70,8 @@ class TestUDPSocket < Utility
     assert_equal teststr.bytesize,
       @client_socket.send(teststr, 0, TEST_HOST, TEST_SERVER_PORT)
 
-    assert_msg teststr, @server_socket.recvfrom
+    assert_msg teststr.force_encoding("ASCII-8BIT"),
+      @server_socket.recvfrom
   end
 
   def test_send_multiple
