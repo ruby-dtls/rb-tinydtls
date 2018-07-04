@@ -2,7 +2,7 @@ require "tinydtls"
 require_relative "./keys.rb"
 
 socket = TinyDTLS::UDPSocket.new
-socket.add_key(TEST_IDENTITY, TEST_PSK)
+socket.add_client(TEST_IDENTITY, TEST_PSK)
 socket.bind("localhost", 2342)
 
 while true

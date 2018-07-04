@@ -31,33 +31,6 @@ module TinyDTLS
       0
     end
 
-    GetPSKInfo = Proc.new do |ctx, sess, type, desc, dlen, result, rlen|
-      ctxobj = TinyDTLS::Context.from_ptr(ctx)
-      if desc.null?
-        key = ctxobj.default_key
-      end
-
-      if type == :DTLS_PSK_KEY
-        key ||= ctxobj.get_key(desc.read_string(dlen))
-        if key.nil?
-          Wrapper::dtls_alert_fatal_create(
-            Wrapper::Alert[:DTLS_ALERT_DECRYPT_ERROR])
-        elsif key.bytesize > rlen
-          Wrapper::dtls_alert_fatal_create(
-            Wrapper::Alert[:DTLS_ALERT_INTERNAL_ERROR])
-        else
-          result.put_bytes(0, key)
-          key.bytesize
-        end
-      elsif type == :DTLS_PSK_IDENTITY
-        identity = ctxobj.default_id
-        result.put_bytes(0, identity)
-        identity.bytesize
-      else
-        0
-      end
-    end
-
     def initialize(address_family = Socket::AF_INET, timeout = DEFAULT_TIMEOUT)
       super(address_family)
       Wrapper::dtls_init
@@ -66,12 +39,13 @@ module TinyDTLS
       @queue   = Queue.new
       @family  = address_family
       @sendfn  = method(:send).super_method
+      @secconf = SecurityConfig.new
 
       @sess_hash  = Hash.new
       @sess_mutex = Mutex.new
 
       id = object_id
-      CONTEXT_MAP[id] = TinyDTLS::Context.new(@sendfn, @queue)
+      CONTEXT_MAP[id] = TinyDTLS::Context.new(@sendfn, @queue, @secconf)
 
       cptr = Wrapper::dtls_new_context(FFI::Pointer.new(id))
       @ctx = Wrapper::DTLSContextStruct.new(cptr)
@@ -79,20 +53,12 @@ module TinyDTLS
       @handler = Wrapper::DTLSHandlerStruct.new
       @handler[:write] = UDPSocket::Write
       @handler[:read] = UDPSocket::Read
-      @handler[:get_psk_info] = UDPSocket::GetPSKInfo
+      @handler[:get_psk_info] = SecurityConfig::GetPSKInfo
       Wrapper::dtls_set_handler(@ctx, @handler)
     end
 
-    def default_id
-      CONTEXT_MAP[object_id].default_id
-    end
-
-    def default_id=(identity)
-      CONTEXT_MAP[object_id].default_id = identity
-    end
-
-    def add_key(key, identity = nil)
-      CONTEXT_MAP[object_id].add_key(identity, key)
+    def add_client(id, key)
+      @secconf.add_client(id, key)
     end
 
     def bind(host, port)

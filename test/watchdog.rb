@@ -5,10 +5,10 @@ class TestWatchdog < Utility
   def setup
     @server_socket = TinyDTLS::UDPSocket.new(TEST_AFAM)
     @server_socket.bind(TEST_HOST, TEST_SERVER_PORT)
-    @server_socket.add_key(TEST_PSK, TEST_ID)
+    @server_socket.add_client(TEST_PSK, TEST_ID)
 
     @client_socket = TinyDTLS::UDPSocket.new(TEST_AFAM, TEST_TIMEOUT)
-    @client_socket.add_key(TEST_PSK, TEST_ID)
+    @client_socket.add_client(TEST_PSK, TEST_ID)
   end
 
   def teardown
