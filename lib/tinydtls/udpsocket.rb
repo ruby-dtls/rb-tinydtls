@@ -1,8 +1,5 @@
 module TinyDTLS
   class UDPSocket < ::UDPSocket
-    # Character encoding used for strings.
-    ENCODING = "UTF-8".freeze
-
     # Default timeout for the cleanup thread in seconds.
     DEFAULT_TIMEOUT = (5 * 60).freeze
 
@@ -32,8 +29,7 @@ module TinyDTLS
                                     0, 0, true).first
 
       ctxobj = TinyDTLS::Context.from_ptr(ctx)
-      ctxobj.queue.push([buf.read_string(len)
-        .force_encoding(ENCODING), addrinfo])
+      ctxobj.queue.push([buf.read_string(len), addrinfo])
 
       # It is unclear to me why this callback even needs a return value,
       # the `tests/dtls-client.c` program in the tinydtls repository
