@@ -5,6 +5,7 @@ require "tinydtls/wrapper"
 require "tinydtls/context"
 require "tinydtls/session"
 require "tinydtls/security_conf"
+require "tinydtls/session_manager"
 require "tinydtls/udpsocket"
 
 module TinyDTLS

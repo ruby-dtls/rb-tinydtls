@@ -1,8 +1,5 @@
 module TinyDTLS
   class UDPSocket < ::UDPSocket
-    # Default timeout for the cleanup thread in seconds.
-    DEFAULT_TIMEOUT = (5 * 60).freeze
-
     Write = Proc.new do |ctx, sess, buf, len|
       addrinfo = Session.from_ptr(sess).addrinfo
 
@@ -31,7 +28,7 @@ module TinyDTLS
       0
     end
 
-    def initialize(address_family = Socket::AF_INET, timeout = DEFAULT_TIMEOUT)
+    def initialize(address_family = Socket::AF_INET, timeout = nil)
       super(address_family)
       Wrapper::dtls_init
 
@@ -41,14 +38,17 @@ module TinyDTLS
       @sendfn  = method(:send).super_method
       @secconf = SecurityConfig.new
 
-      @sess_hash  = Hash.new
-      @sess_mutex = Mutex.new
-
       id = object_id
       CONTEXT_MAP[id] = TinyDTLS::Context.new(@sendfn, @queue, @secconf)
 
       cptr = Wrapper::dtls_new_context(FFI::Pointer.new(id))
       @ctx = Wrapper::DTLSContextStruct.new(cptr)
+
+      if timeout.nil?
+        @sessions = SessionManager.new(@ctx)
+      else
+        @sessions = SessionManager.new(@ctx, timeout)
+      end
 
       @handler = Wrapper::DTLSHandlerStruct.new
       @handler[:write] = UDPSocket::Write
@@ -63,21 +63,21 @@ module TinyDTLS
 
     def bind(host, port)
       super(host, port)
-      start_threads
+      start_thread
     end
 
     # TODO: close_{read,write}
 
     def close
-      @dtls_thread.kill unless @dtls_thread.nil?
-      @cleanup_thread.kill unless @cleanup_thread.nil?
+      @sessions.destroy!
+      @thread.kill unless @thread.nil?
 
       # DTLS free context sends messages to peers so we need to
       # call it before we actually close the underlying socket.
       Wrapper::dtls_free_context(@ctx)
       super
 
-      # Assuming the thread is already stopped at this point
+      # Assuming the @thread is already stopped at this point
       # we can safely access the CONTEXT_MAP without running
       # into any kind of concurrency problems.
       CONTEXT_MAP.delete(object_id)
@@ -141,11 +141,11 @@ module TinyDTLS
 
       addr = Addrinfo.getaddrinfo(host, port, nil, :DGRAM).first
 
-      @sess_mutex.lock
-      sess = get_session(addr)
-      @sess_mutex.unlock
+      @sessions.freeze
+      sess = @sessions[addr]
+      @sessions.unfreeze
 
-      start_threads # Start thread, if it hasn't been started already
+      start_thread
 
       # If a new thread has been started above a new handshake needs to
       # be performed by it. We need to block here until the handshake
@@ -167,18 +167,6 @@ module TinyDTLS
 
     private
 
-    def get_session(addr)
-      key = addr.getnameinfo
-      if @sess_hash.has_key? key
-        sess, _ = @sess_hash[key]
-      else
-        sess = Session.new(addr)
-        @sess_hash[key] = [sess, true]
-      end
-
-      return sess
-    end
-
     def to_addrinfo(*args)
       af, port, _, addr = args
       Addrinfo.getaddrinfo(addr, port, af, :DGRAM).first
@@ -188,60 +176,23 @@ module TinyDTLS
       return len >= 0 ? str.byteslice(0, len) : str
     end
 
-    def start_threads
-      start_dtls_thread
-      start_cleanup_thread
-    end
-
     # Creates a thread responsible for reading from reciving messages
     # from the underlying socket and passing them to tinydtls.
     #
     # The thread is only created once.
-    def start_dtls_thread
-      @dtls_thread ||= Thread.new do
+    def start_thread
+      @thread ||= Thread.new do
         while true
           data, addr = method(:recvfrom).super_method
             .call(Wrapper::DTLS_MAX_BUF)
           addrinfo = to_addrinfo(*addr)
 
-          @sess_mutex.lock
-          sess = get_session(addrinfo)
+          @sessions.freeze
+          sess = @sessions[addrinfo]
           Wrapper::dtls_handle_message(@ctx, sess.to_ptr, data, data.bytesize)
-          @sess_mutex.unlock
+          @sessions.unfreeze
         end
       end
     end
-
-    # Creates a thread responsible for freeing ressources assigned to
-    # stale connection. This thread implements the clock hand algorithm
-    # as described in Modern Operating Systems, p. 212.
-    #
-    # The thread is only created once.
-    def start_cleanup_thread
-      @cleanup_thread ||= Thread.new do
-        while true
-          sleep @timeout
-
-          @sess_mutex.lock
-          @sess_hash.transform_values! do |value|
-            sess, used = value
-            if used
-              [sess, !used]
-            else # Not used since we've been here last time → free resources
-              sess.destroy!(@ctx)
-              nil
-            end
-          end
-
-          # We can't delete elements from the map in the #transform_values!
-          # block, we just assign nil to them. Thus we need to filter
-          # the map again here.
-          @sess_hash.reject! { |_, v| v.nil? }
-
-          @sess_mutex.unlock
-        end
-      end
-    end
-
   end
 end

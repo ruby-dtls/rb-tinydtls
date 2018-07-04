@@ -53,6 +53,7 @@ class TestWatchdog < Utility
   private
 
   def get_client_sessions
-    @client_socket.instance_variable_get("@sess_hash")
+    @client_socket.instance_variable_get("@sessions")
+      .instance_variable_get("@store")
   end
 end
