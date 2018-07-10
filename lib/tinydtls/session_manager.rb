@@ -27,14 +27,7 @@ module TinyDTLS
         @store[key] = [sess, true]
       end
 
-      @mutex.lock
-      begin
-        res = f.call(sess)
-      ensure
-        @mutex.unlock
-      end
-
-      res
+      @mutex.synchronize { f.call(sess) }
     end
 
     def destroy!
