@@ -35,6 +35,16 @@ module TinyDTLS
       :DTLS_ALERT_UNSUPPORTED_EXTENSION, 110
     )
 
+    LogLevel = enum(
+      :DTLS_LOG_EMERG, 0,
+      :DTLS_LOG_ALERT,
+      :DTLS_LOG_CRIT,
+      :DTLS_LOG_WARN,
+      :DTLS_LOG_NOTICE,
+      :DTLS_LOG_INFO,
+      :DTLS_LOG_DEBUG
+    )
+
     enum :alert_level, [
       :DTLS_ALERT_LEVEL_WARNING, 1,
       :DTLS_ALERT_LEVEL_FATAL, 2,
@@ -81,6 +91,7 @@ module TinyDTLS
       [:pointer, :pointer, :pointer, :size_t], :int
     attach_function :dtls_connect,
       [:pointer, :pointer], :int
+    attach_function :dtls_set_log_level, [LogLevel], :void
 
     attach_function :dtls_get_peer, [:pointer, :pointer], :pointer
     attach_function :dtls_reset_peer, [:pointer, :pointer], :void
