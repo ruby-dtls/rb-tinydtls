@@ -141,10 +141,6 @@ module TinyDTLS
 
       addr = Addrinfo.getaddrinfo(host, port, nil, :DGRAM).first
 
-      @sessions.freeze
-      sess = @sessions[addr]
-      @sessions.unfreeze
-
       start_thread
 
       # If a new thread has been started above a new handshake needs to
@@ -154,11 +150,7 @@ module TinyDTLS
       # The current approach is calling `Wrapper::dtls_write` until it
       # succeeds which is suboptimal because it doesn't take into
       # account that the handshake may fail.
-      until (res = Wrapper::dtls_write(@ctx, sess.to_ptr, mesg, mesg.bytesize)) > 0
-        if res == -1
-          raise Errno::EIO
-        end
-
+      until (res = dtls_send(addr, mesg)) > 0
         sleep 1
       end
 
@@ -174,6 +166,20 @@ module TinyDTLS
 
     def byteslice(str, len)
       return len >= 0 ? str.byteslice(0, len) : str
+    end
+
+    # Sends a dtls message to a specified address. It also takes care
+    # of looking the session manager and is thus thread-safe.
+    def dtls_send(addr, mesg)
+      @sessions.freeze
+      res = Wrapper::dtls_write(@ctx, @sessions[addr].to_ptr, mesg, mesg.bytesize)
+      if res == -1
+        @sessions.unfreeze
+        raise Errno::EIO
+      end
+      @sessions.unfreeze
+
+      return res
     end
 
     # Creates a thread responsible for reading from reciving messages
