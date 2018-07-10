@@ -38,6 +38,7 @@ module TinyDTLS
     end
 
     def destroy!
+      @mutex.lock
       @thread.kill
     end
 
