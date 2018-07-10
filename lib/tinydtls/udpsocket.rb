@@ -128,6 +128,8 @@ module TinyDTLS
     end
 
     def send(mesg, flags, host = nil, port = nil)
+      start_thread
+
       if host.nil? and port.nil?
         if @defport.nil? or @defhost.nil?
           raise Errno::EDESTADDRREQ
@@ -140,8 +142,6 @@ module TinyDTLS
       end
 
       addr = Addrinfo.getaddrinfo(host, port, nil, :DGRAM).first
-
-      start_thread
 
       # If a new thread has been started above a new handshake needs to
       # be performed by it. We need to block here until the handshake
