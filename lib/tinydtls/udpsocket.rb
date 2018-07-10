@@ -171,15 +171,10 @@ module TinyDTLS
     # Sends a dtls message to a specified address. It also takes care
     # of looking the session manager and is thus thread-safe.
     def dtls_send(addr, mesg)
-      @sessions.freeze
-      res = Wrapper::dtls_write(@ctx, @sessions[addr].to_ptr, mesg, mesg.bytesize)
-      if res == -1
-        @sessions.unfreeze
-        raise Errno::EIO
+      @sessions[addr] do |sess|
+        res = Wrapper::dtls_write(@ctx, sess.to_ptr, mesg, mesg.bytesize)
+        res == -1 ? raise(Errno::EIO) : res
       end
-      @sessions.unfreeze
-
-      return res
     end
 
     # Creates a thread responsible for reading from reciving messages
@@ -193,10 +188,9 @@ module TinyDTLS
             .call(Wrapper::DTLS_MAX_BUF)
           addrinfo = to_addrinfo(*addr)
 
-          @sessions.freeze
-          sess = @sessions[addrinfo]
-          Wrapper::dtls_handle_message(@ctx, sess.to_ptr, data, data.bytesize)
-          @sessions.unfreeze
+          @sessions[addrinfo] do |sess|
+            Wrapper::dtls_handle_message(@ctx, sess.to_ptr, data, data.bytesize)
+          end
         end
       end
     end

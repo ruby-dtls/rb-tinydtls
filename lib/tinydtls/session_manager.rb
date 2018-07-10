@@ -13,10 +13,8 @@ module TinyDTLS
       start_thread(ctx)
     end
 
-    # Retrieve a session from the session manager. This function isn't
-    # thread safe and requires #freeze to be called before invoking this
-    # function and #unfreeze afterwards.
-    def [](addrinfo)
+    # Retrieve a session from the session manager.
+    def [](addrinfo, &f)
       unless addrinfo.is_a? Addrinfo
         raise TypeError
       end
@@ -29,19 +27,18 @@ module TinyDTLS
         @store[key] = [sess, true]
       end
 
-      return sess
+      @mutex.lock
+      begin
+        res = f.call(sess)
+      ensure
+        @mutex.unlock
+      end
+
+      res
     end
 
     def destroy!
       @thread.kill
-    end
-
-    def freeze
-      @mutex.lock
-    end
-
-    def unfreeze
-      @mutex.unlock
     end
 
     private
@@ -60,7 +57,7 @@ module TinyDTLS
           # attr_accessor for it is declared.
           sleep @timeout
 
-          freeze
+          @mutex.lock
           @store.transform_values! do |value|
             sess, used = value
             if used
@@ -76,7 +73,7 @@ module TinyDTLS
           # the map again here.
           @store.reject! { |_, v| v.nil? }
 
-          unfreeze
+          @mutex.unlock
         end
       end
     end
