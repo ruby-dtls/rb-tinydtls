@@ -169,7 +169,7 @@ module TinyDTLS
     end
 
     # Sends a dtls message to a specified address. It also takes care
-    # of looking the session manager and is thus thread-safe.
+    # of locking the session manager and is thus thread-safe.
     def dtls_send(addr, mesg)
       @sessions[addr] do |sess|
         res = Wrapper::dtls_write(@ctx, sess.to_ptr, mesg, mesg.bytesize)

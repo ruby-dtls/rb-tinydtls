@@ -1,10 +1,21 @@
 module TinyDTLS
+  # This class is used to manage established tinydtls sessions. It
+  # stores instances of the TinyDTLS::Session class.
+  #
+  # While memory allocated for sessions is automatically freed by
+  # tinydtls, if it receive an alert from the peer associated with that
+  # session, memory isn't freed if the peer doesn't send an alert.
+  # Therefore this class starts a background thread automatically
+  # freeing memory associated with sessions which haven't been used
+  # since a specified duration.
   class SessionManager
     # Default timeout for the cleanup thread in seconds.
     DEFAULT_TIMEOUT = (5 * 60).freeze
 
     attr_accessor :timeout
 
+    # Creates a new instance of this class. A tinydtls `context_t`
+    # pointer is required to free sessions in the background thread.
     def initialize(ctx, timeout = DEFAULT_TIMEOUT)
       @store = {}
       @mutex = Mutex.new
@@ -30,6 +41,7 @@ module TinyDTLS
       @mutex.synchronize { f.call(sess) }
     end
 
+    # Frees all ressources associated with this class.
     def destroy!
       @mutex.lock
       @thread.kill
