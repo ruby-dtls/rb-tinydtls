@@ -44,6 +44,7 @@ module TinyDTLS
     # Frees all ressources associated with this class.
     def destroy!
       @mutex.lock
+      @store.clear
       @thread.kill
     end
 
