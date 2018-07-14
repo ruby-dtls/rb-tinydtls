@@ -7,8 +7,18 @@ socket.connect("localhost", 2342)
 
 PROMPT = "> ".freeze
 
+recvthr = Thread.new do
+  loop do
+    payload, _ = socket.recvfrom
+    puts "Received: #{payload}"
+  end
+end
+
 print PROMPT
 while line = gets
-  socket.send(line[0..-1], 0)
+  input = line[0..-2]
+  unless input.empty?
+    socket.send(input, 0)
+  end
   print PROMPT
 end
