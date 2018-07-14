@@ -1,4 +1,12 @@
 module TinyDTLS
+  # This class implements a DTLS socket on top of a ruby UDPSocket. It
+  # isn't currently nowhere near being API compatible with the ruby
+  # UDPSocket. Being 100% backwards compatible with the ruby UDPSocket
+  # is not possible to to tinydtls internals. For instance we can't
+  # properly implement IO#select. It should thus be considered if it is
+  # really a good idea to extend the ruby UDPSocket in the long run.
+  #
+  # Basic send and receive methods are implemented and should work.
   class UDPSocket < ::UDPSocket
     Write = Proc.new do |ctx, sess, buf, len|
       addrinfo = Session.from_ptr(sess).addrinfo
