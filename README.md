@@ -25,7 +25,7 @@ A basic test suite is also available which can be run using:
 The high-level API to interact with tinydtls provided by this gem is the
 `TinyDTLS::UDPSocket` class. This class currently extends the standard
 ruby UDPSocket class and the `UDPSocket#recvfrom` and `UDPSocket#send`
-methods should work expected as expected.
+methods should work as expected.
 
 However, before being able to use the `TinyDTLS::UDPSocket` a pre-shared
 key needs to be configured. Thus the code for creating a socket and
