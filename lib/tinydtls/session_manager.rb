@@ -57,7 +57,7 @@ module TinyDTLS
     # The thread is only created once.
     def start_thread(ctx)
       @thread ||= Thread.new do
-        while true
+        loop do
           # XXX: How does concurrent access to variables work in ruby?
           # as known as: Is this a concurrency problems since the value
           # of @timeout might be changed by a different thread since an

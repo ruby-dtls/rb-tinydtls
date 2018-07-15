@@ -191,7 +191,7 @@ module TinyDTLS
     # The thread is only created once.
     def start_thread
       @thread ||= Thread.new do
-        while true
+        loop do
           data, addr = method(:recvfrom).super_method
             .call(Wrapper::DTLS_MAX_BUF)
           addrinfo = to_addrinfo(*addr)
