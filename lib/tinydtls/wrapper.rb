@@ -112,6 +112,7 @@ module TinyDTLS
     # sockaddr_in{,6}`.
     attach_function :dtls_new_session,
       [:pointer, :socklen_t], :pointer
+    attach_function :dtls_free_session, [:pointer], :void
     attach_function :dtls_session_addr, [:pointer, SocklenPtr], :pointer
 
     def self.dtls_get_app_data(ctx)
