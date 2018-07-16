@@ -7,6 +7,10 @@ class Utility < Minitest::Test
   TEST_CLIENT_PORT = 2323
   TEST_SERVER_PORT = 4000
 
+  TEST_IPADDR = Addrinfo
+    .getaddrinfo(TEST_HOST, nil, TEST_AFAM, :DGRAM)
+    .first.ip_address
+
   def assert_msg(pay, msg)
     assert_equal pay, msg.first
     assert_equal TEST_HOST, msg.last[2]

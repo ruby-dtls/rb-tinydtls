@@ -24,8 +24,9 @@ module TinyDTLS
       # the #recvfrom function needs to return the DNS
       # hostname.
       sender = Socket.getaddrinfo(addrinfo.ip_address,
-                                  addrinfo.ip_port, nil, :DGRAM,
-                                  0, 0, true).first
+                                  addrinfo.ip_port,
+                                  addrinfo.afamily,
+                                  :DGRAM, 0, 0, true).first
 
       ctxobj = TinyDTLS::Context.from_ptr(ctx)
       ctxobj.queue.push([buf.read_string(len), sender])
@@ -149,7 +150,7 @@ module TinyDTLS
         port, host = Socket.unpack_sockaddr_in(host)
       end
 
-      addr = Addrinfo.getaddrinfo(host, port, nil, :DGRAM).first
+      addr = Addrinfo.getaddrinfo(host, port, @family, :DGRAM).first
 
       # If a new thread has been started above a new handshake needs to
       # be performed by it. We need to block here until the handshake

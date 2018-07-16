@@ -17,14 +17,14 @@ class TestUDPSocket < Utility
   end
 
   def test_addr
-    ipaddr = Addrinfo.ip(TEST_HOST).ip_address
-    assert_equal ["AF_INET", TEST_SERVER_PORT, ipaddr, ipaddr],
+    assert_equal ["AF_INET", TEST_SERVER_PORT, TEST_IPADDR, TEST_IPADDR],
       @server_socket.addr
   end
 
   def test_addr_reverse_lookup
     addrinfo = Socket.getaddrinfo(
-      TEST_HOST, TEST_SERVER_PORT, nil, :DGRAM).first
+      TEST_HOST, TEST_SERVER_PORT, TEST_AFAM, :DGRAM,
+      0, 0, true).first
 
     assert_equal addrinfo[0..3], @server_socket.addr(true)
   end
@@ -41,7 +41,7 @@ class TestUDPSocket < Utility
   def test_send_sockaddr_to
     teststr = "foo bar foo"
 
-    sockaddr_to = Socket.sockaddr_in(TEST_SERVER_PORT, TEST_HOST)
+    sockaddr_to = Socket.sockaddr_in(TEST_SERVER_PORT, TEST_IPADDR)
     assert_equal teststr.bytesize,
       @client_socket.send(teststr, 0, sockaddr_to)
 
