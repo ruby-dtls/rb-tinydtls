@@ -42,6 +42,7 @@ module TinyDTLS
       unless peer.null?
         Wrapper::dtls_reset_peer(ctx, peer)
       end
+      Wrapper::dtls_free_session(@session)
     end
   end
 end
