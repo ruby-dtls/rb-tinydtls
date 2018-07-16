@@ -4,6 +4,10 @@ module TinyDTLS
   # function pointer used in the `dtls_handler_t` struct which is used
   # by tinydtls to retrieve keys and identities.
   #
+  # The API of this class is quite strict and raises lots of exceptions
+  # because it is quite annoying to debug errors occuring in the
+  # GetPSKInfo callback.
+  #
   # XXX: Currently this function doesn't map IP address to keys/identities.
   class SecurityConfig
     # Implementation of the `get_psk_info` function pointer as used by
@@ -44,27 +48,43 @@ module TinyDTLS
       end
     end
 
-    # Create a new instance of this class. A #default_key and a
-    # #default_id can be optionally specified. If they are not specified
-    # the first key/identity added is used as the default value.
-    def initialize(default_id = nil, default_key = nil)
-      @default_id  = default_id
-      @default_key = default_key
-
+    # Creates a new instance of this class. At least one key/identity
+    # pair need to be added to the new instance of this class using
+    # #add_client otherwise the #default_id and #default_key methods
+    # always raise an error causing TinyDTLS handshakes to fail.
+    def initialize
       @identity_map = Hash.new
     end
 
-    # Adds a security configuration for the given identity.
+    # Adds a security configuration for the given identity, key must be
+    # non-null otherwise a TypeError is raise.
     def add_client(id, key)
-      @identity_map[id] = key
+      if key.nil?
+        raise TypeError.new("Key must be non-nil")
+      else
+        @identity_map[id] = key
+      end
     end
 
-    # Retrieves the key associated with the given identity.
+    # Retrieves the key associated with the given identity, nil is
+    # returned if no key was specified for the given identity.
     def get_key(id)
-      @identity_map[id]
+      if @identity_map.has_key? id
+        @identity_map[id]
+      end
     end
 
+    # Retrieves the default identity used for establishing new
+    # handshakes. If a #default_id hasn't been explicitly set it returns
+    # the first identity added using #add_client.
+    #
+    # At least one identity must have been added to the instance,
+    # otherwise this methods raises a TypeError.
     def default_id
+      if @identity_map.empty?
+        raise TypeError.new("Cannot retrieve a default identity from an empty store")
+      end
+
       if @default_id.nil?
         @identity_map.to_a.first.first
       else
@@ -72,11 +92,40 @@ module TinyDTLS
       end
     end
 
+    # Changes the default identity, the given identity must already
+    # exist in the store.
+    def default_id=(id)
+      if @identity_map.has_key? id
+        @default_id = id
+      else
+        raise TypeError.new("Default identity must already exist")
+      end
+    end
+
+    # Retrieves the default key used when a call to #GetPSKInfo didn't
+    # specify a key. If a #default_key hasn't been explicitly set it
+    # returns the first key added using #add_client.
+    #
+    # At least one key must have been added to the instance,
+    # otherwise this methods raises a TypeError.
     def default_key
+      if @identity_map.empty?
+        raise TypeError.new("Cannot retrieve a default key from an empty store")
+      end
+
       if @default_key.nil?
         @identity_map.to_a.first.last
       else
         @default_key
+      end
+    end
+
+    # Changes the default key, the given key must already exist in the store.
+    def default_key=(key)
+      if @identity_map.key(key)
+        @default_key = key
+      else
+        raise TypeError.new("Default key must already exist")
       end
     end
   end
