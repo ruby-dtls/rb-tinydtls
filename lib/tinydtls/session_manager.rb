@@ -12,7 +12,9 @@ module TinyDTLS
     # Default timeout for the cleanup thread in seconds.
     DEFAULT_TIMEOUT = (5 * 60).freeze
 
-    attr_accessor :timeout
+    # Timeout used by the cleanup thread. If a session hasn't been used
+    # within `timeout * 2` seconds it will be freed automatically.
+    attr_reader :timeout
 
     # Creates a new instance of this class. A tinydtls `context_t`
     # pointer is required to free sessions in the background thread.
@@ -58,10 +60,6 @@ module TinyDTLS
     def start_thread(ctx)
       @thread ||= Thread.new do
         loop do
-          # XXX: How does concurrent access to variables work in ruby?
-          # as known as: Is this a concurrency problems since the value
-          # of @timeout might be changed by a different thread since an
-          # attr_accessor for it is declared.
           sleep @timeout
 
           @mutex.lock
