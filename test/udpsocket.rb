@@ -1,13 +1,12 @@
 class TestUDPSocket < Utility
-  # TODO:
-  #   1. Make it work without TEST_ID
+  TEST_TIMEOUT = 5.freeze
 
   def setup
     @server_socket = TinyDTLS::UDPSocket.new(TEST_AFAM)
     @server_socket.bind(TEST_HOST, TEST_SERVER_PORT)
     @server_socket.add_client(TEST_PSK, TEST_ID)
 
-    @client_socket = TinyDTLS::UDPSocket.new(TEST_AFAM)
+    @client_socket = TinyDTLS::UDPSocket.new(TEST_AFAM, TEST_TIMEOUT)
     @client_socket.add_client(TEST_PSK, TEST_ID)
   end
 
@@ -100,5 +99,24 @@ class TestUDPSocket < Utility
 
     assert_equal :wait_readable,
       @server_socket.recvfrom_nonblock(exception: false)
+  end
+
+  def test_free_stale_peer
+    @client_socket.send("foobar", 0, TEST_HOST, TEST_SERVER_PORT)
+    assert_equal 1, get_client_sessions.size
+
+    # We don't really know how long it takes until the thread is
+    # actually scheduled so we just add a few seconds for good
+    # measure.
+    sleep 4 * TEST_TIMEOUT
+
+    assert get_client_sessions.empty?
+  end
+
+  private
+
+  def get_client_sessions
+    @client_socket.instance_variable_get("@sessions")
+      .instance_variable_get("@store")
   end
 end
