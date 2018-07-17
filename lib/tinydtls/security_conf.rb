@@ -128,5 +128,12 @@ module TinyDTLS
         raise TypeError.new("Default key must already exist")
       end
     end
+
+    # Sets the #default_id and #default_key, restrictions mentioned in
+    # #default_id= and #default_key= apply.
+    def set_defaults(id, key)
+      default_id = id
+      default_key = key
+    end
   end
 end
