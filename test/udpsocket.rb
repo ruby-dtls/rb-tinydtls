@@ -2,6 +2,8 @@ class TestUDPSocket < Utility
   TEST_TIMEOUT = 5.freeze
 
   def setup
+    super
+
     @server_socket = TinyDTLS::UDPSocket.new(TEST_AFAM)
     @server_socket.bind(TEST_HOST, TEST_SERVER_PORT)
     @server_socket.add_client(TEST_PSK, TEST_ID)

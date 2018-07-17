@@ -2,6 +2,8 @@ class TestSessionManager < Utility
   TEST_TIMEOUT = 5.freeze
 
   def setup
+    super
+
     ctx = TinyDTLS::Wrapper::DTLSContextStruct.new(nil)
     @sessions = TinyDTLS::SessionManager.new(ctx, TEST_TIMEOUT)
   end

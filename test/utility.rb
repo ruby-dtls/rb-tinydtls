@@ -11,6 +11,12 @@ class Utility < Minitest::Test
     .getaddrinfo(TEST_HOST, nil, TEST_AFAM, :DGRAM)
     .first.ip_address
 
+  TEST_LOG_LEVEL = TinyDTLS::Wrapper::LogLevel[:DTLS_LOG_EMERG]
+
+  def setup
+    TinyDTLS::Wrapper::dtls_set_log_level(TEST_LOG_LEVEL)
+  end
+
   def assert_msg(pay, msg)
     assert_equal pay, msg.first
     assert_equal TEST_HOST, msg.last[2]
