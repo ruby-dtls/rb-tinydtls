@@ -36,13 +36,16 @@ module TinyDTLS
       @session
     end
 
-    # Frees all resources associated with the underlying `session_t`
-    # tinydtls type and reset any existing connections.
-    def destroy!(ctx)
-      peer = Wrapper::dtls_get_peer(ctx, @session)
-      unless peer.null?
-        Wrapper::dtls_reset_peer(ctx, peer)
+    # Frees all resources associated with the underlying `session_t`.
+    # Optionally it also resets all peer connections associated with the
+    # session (if any). In order to do so a TinyDTLS::Context needs to
+    # be passed.
+    def close(ctx = nil)
+      unless ctx.nil?
+        peer = Wrapper::dtls_get_peer(ctx.to_ffi, @session)
+        Wrapper::dtls_reset_peer(ctx.to_ffi, peer) unless peer.null?
       end
+
       Wrapper::dtls_free_session(@session)
       @session = nil
     end
