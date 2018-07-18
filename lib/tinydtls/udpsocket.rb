@@ -47,23 +47,20 @@ module TinyDTLS
       @sendfn  = method(:send).super_method
       @secconf = SecurityConfig.new
 
-      id = object_id
-      CONTEXT_MAP[id] = TinyDTLS::Context.new(@sendfn, @queue, @secconf)
-
-      cptr = Wrapper::dtls_new_context(FFI::Pointer.new(id))
-      @ctx = Wrapper::DTLSContextStruct.new(cptr)
+      @context = TinyDTLS::Context.new(@sendfn, @queue, @secconf)
+      CONTEXT_MAP[@context.key] = @context
 
       if timeout.nil?
-        @sessions = SessionManager.new(@ctx)
+        @sessions = SessionManager.new(@context)
       else
-        @sessions = SessionManager.new(@ctx, timeout)
+        @sessions = SessionManager.new(@context, timeout)
       end
 
       @handler = Wrapper::DTLSHandlerStruct.new
       @handler[:write] = UDPSocket::Write
       @handler[:read] = UDPSocket::Read
       @handler[:get_psk_info] = SecurityConfig::GetPSKInfo
-      Wrapper::dtls_set_handler(@ctx, @handler)
+      Wrapper::dtls_set_handler(@context.to_ffi, @handler)
     end
 
     def add_client(id, key)
@@ -81,15 +78,15 @@ module TinyDTLS
       @sessions.destroy!
       @thread.kill unless @thread.nil?
 
-      # DTLS free context sends messages to peers so we need to
-      # call it before we actually close the underlying socket.
-      Wrapper::dtls_free_context(@ctx)
+      # dtls_free_context sends messages to peers so we need to
+      # explicitly free the dtls_context_t before closing the socket.
+      Wrapper::dtls_free_context(@context.to_ffi)
       super
 
       # Assuming the @thread is already stopped at this point
       # we can safely access the CONTEXT_MAP without running
       # into any kind of concurrency problems.
-      CONTEXT_MAP.delete(object_id)
+      CONTEXT_MAP.delete(@context.key)
     end
 
     def connect(host, port)
@@ -181,7 +178,8 @@ module TinyDTLS
     # of locking the session manager and is thus thread-safe.
     def dtls_send(addr, mesg)
       @sessions[addr] do |sess|
-        res = Wrapper::dtls_write(@ctx, sess.to_ptr, mesg, mesg.bytesize)
+        res = Wrapper::dtls_write(@context.to_ffi, sess.to_ptr,
+                                  mesg, mesg.bytesize)
         res == -1 ? raise(Errno::EIO) : res
       end
     end
@@ -198,7 +196,8 @@ module TinyDTLS
           addrinfo = to_addrinfo(*addr)
 
           @sessions[addrinfo] do |sess|
-            Wrapper::dtls_handle_message(@ctx, sess.to_ptr, data, data.bytesize)
+            Wrapper::dtls_handle_message(@context.to_ffi, sess.to_ptr,
+                                         data, data.bytesize)
           end
         end
       end

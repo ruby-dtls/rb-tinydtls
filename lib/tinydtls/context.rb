@@ -19,6 +19,9 @@ module TinyDTLS
       @sendfn  = sendfn
       @queue   = queue
       @secconf = secconf
+
+      @ffi_struct = Wrapper::DTLSContextStruct.new(
+        Wrapper::dtls_new_context(FFI::Pointer.new(key)))
     end
 
     # Create a new instance of this class from a pointer to a `struct
@@ -30,6 +33,18 @@ module TinyDTLS
     def self.from_ptr(ptr)
       obj = Wrapper::DTLSContextStruct.new(ptr)
       return CONTEXT_MAP[Wrapper::dtls_get_app_data(obj).to_i]
+    end
+
+    # Returns a key which should be used to store this context in the
+    # global TinyDTLS::CONTEXT_MAP.
+    def key
+      object_id
+    end
+
+    # Returns an FFI::Struct for this object, representing the
+    # underlying `dtls_context_t`.
+    def to_ffi
+      @ffi_struct
     end
   end
 end

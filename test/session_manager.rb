@@ -4,7 +4,7 @@ class TestSessionManager < Utility
   def setup
     super
 
-    ctx = TinyDTLS::Wrapper::DTLSContextStruct.new(nil)
+    ctx = TinyDTLS::Context.new(nil, nil, nil)
     @sessions = TinyDTLS::SessionManager.new(ctx, TEST_TIMEOUT)
   end
 

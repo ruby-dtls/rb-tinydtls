@@ -68,7 +68,7 @@ module TinyDTLS
             if used
               [sess, !used]
             else # Not used since we've been here last time → free resources
-              sess.destroy!(ctx)
+              sess.destroy!(ctx.to_ffi)
               nil
             end
           end
