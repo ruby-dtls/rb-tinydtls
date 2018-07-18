@@ -10,16 +10,15 @@ class TestSession < Minitest::Test
     end
   end
 
-  def test_from_ptr
+  def test_addr_from_ptr
     addrinfo = Addrinfo.getaddrinfo("www.example.org", nil).first
     sockaddr = addrinfo.to_sockaddr
 
     session_ptr = TinyDTLS::Wrapper::dtls_new_session(sockaddr, sockaddr.bytesize)
     assert !session_ptr.null?
-    session = TinyDTLS::Session.from_ptr(session_ptr)
 
-    assert_equal addrinfo.ip_address, session.addrinfo.ip_address
-    assert session_ptr != session.to_ptr
+    assert_equal addrinfo.ip_address,
+      TinyDTLS::Session.addr_from_ptr(session_ptr).ip_address
   end
 end
 

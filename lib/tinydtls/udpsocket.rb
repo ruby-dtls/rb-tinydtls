@@ -9,7 +9,7 @@ module TinyDTLS
   # Basic send and receive methods are implemented and should work.
   class UDPSocket < ::UDPSocket
     Write = Proc.new do |ctx, sess, buf, len|
-      addrinfo = Session.from_ptr(sess).addrinfo
+      addrinfo = Session.addr_from_ptr(sess)
 
       ctxobj = TinyDTLS::Context.from_ptr(ctx)
       ctxobj.sendfn.call(buf.read_string(len),
@@ -18,7 +18,7 @@ module TinyDTLS
     end
 
     Read = Proc.new do |ctx, sess, buf, len|
-      addrinfo = Session.from_ptr(sess).addrinfo
+      addrinfo = Session.addr_from_ptr(sess)
 
       # We need to perform a reverse lookup here because
       # the #recvfrom function needs to return the DNS

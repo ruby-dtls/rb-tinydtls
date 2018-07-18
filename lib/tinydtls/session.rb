@@ -3,11 +3,14 @@ module TinyDTLS
   class Session
     attr_reader :addrinfo
 
-    # Creates a new instance of this class from the given Addrinfo.
+    # Creates a new instance of this class from a given Addrinfo
+    # instance. This functions allocates memory for the underlying
+    # `session_t` type which needs to be freed explicitly freed using
+    # #close.
     def initialize(addrinfo)
       @addrinfo = addrinfo
       unless @addrinfo.is_a? Addrinfo
-        raise TypeError
+        raise TypeError.new("Expected Addrinfo or FFI::Pointer")
       end
 
       sockaddr = @addrinfo.to_sockaddr
@@ -17,15 +20,13 @@ module TinyDTLS
       end
     end
 
-    # Creates a new instance of this class from a pointer to a
-    # `session_t` tinydtls type. Such a pointer is, for instance, passed
-    # to the various tinydtls callback functions.
-    def self.from_ptr(ptr)
+    # Extracts an Addrinfo instance of a FFI::Pointer to a `session_t`
+    # as returned by #to_ptr.
+    def self.addr_from_ptr(ptr)
       lenptr = Wrapper::SocklenPtr.new
       sockaddr = Wrapper::dtls_session_addr(ptr, lenptr)
 
-      addrinfo = Addrinfo.new(sockaddr.read_string(lenptr[:value]))
-      return Session.new(addrinfo)
+      Addrinfo.new(sockaddr.read_string(lenptr[:value]))
     end
 
     # Converts the object into a C pointer to a `session_t` tinydtls
@@ -43,6 +44,7 @@ module TinyDTLS
         Wrapper::dtls_reset_peer(ctx, peer)
       end
       Wrapper::dtls_free_session(@session)
+      @session = nil
     end
   end
 end
