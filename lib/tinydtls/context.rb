@@ -24,9 +24,9 @@ module TinyDTLS
         Wrapper::dtls_new_context(FFI::Pointer.new(key)))
     end
 
-    # Create a new instance of this class from a pointer to a `struct
-    # dtls_context_t`. Such a pointer is, for instance, passed to the
-    # various tinydtls callback functions.
+    # Retrieves an instance of this class from the TinyDTLS::CONTEXT_MAP
+    # using a pointer to a `struct dtls_context_t`. Such a pointer is,
+    # for instance, passed to the various tinydtls callback functions.
     #
     # The `struct dtls_context_t` which the given pointer points to must
     # have been created by TinyDTLS::UDPSocket#initialize.
