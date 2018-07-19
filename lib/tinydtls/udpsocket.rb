@@ -75,7 +75,7 @@ module TinyDTLS
     # TODO: close_{read,write}
 
     def close
-      @sessions.destroy!
+      @sessions.close
       @thread.kill unless @thread.nil?
 
       # dtls_free_context sends messages to peers so we need to

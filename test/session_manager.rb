@@ -8,6 +8,10 @@ class TestSessionManager < Utility
     @sessions = TinyDTLS::SessionManager.new(ctx, TEST_TIMEOUT)
   end
 
+  def teardown
+    @sessions.close
+  end
+
   def test_add_and_check_used
     addrinfo = Addrinfo.getaddrinfo("www.kame.net", 80).first
     @sessions[addrinfo] do |sess|

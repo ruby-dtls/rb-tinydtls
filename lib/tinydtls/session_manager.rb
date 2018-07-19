@@ -18,12 +18,18 @@ module TinyDTLS
 
     # Creates a new instance of this class. A tinydtls `context_t`
     # pointer is required to free sessions in the background thread.
-    def initialize(ctx, timeout = DEFAULT_TIMEOUT)
+    #
+    # Memory for sessions created using #[] needs to be explicitly freed
+    # by calling #close as soons as this class instance is no longer
+    # needed.
+    def initialize(context, timeout = DEFAULT_TIMEOUT)
       @store = {}
       @mutex = Mutex.new
-      @timeout = timeout
 
-      start_thread(ctx)
+      @timeout = timeout
+      @context = context
+
+      start_thread
     end
 
     # Retrieve a session from the session manager.
@@ -45,11 +51,18 @@ module TinyDTLS
       end
     end
 
-    # Frees all ressources associated with this class.
-    def destroy!
-      @mutex.lock
-      @store.clear
-      @thread.kill
+    # Kills the background thread. All established sessions are closed
+    # as well, see Session#close.
+    def close
+      @mutex.synchronize do
+        @thread.kill
+        @thread.join
+      end
+
+      @store.each_value do |value|
+        sess, _ = value
+        sess.close(@context)
+      end
     end
 
     private
@@ -59,7 +72,7 @@ module TinyDTLS
     # as described in Modern Operating Systems, p. 212.
     #
     # The thread is only created once.
-    def start_thread(ctx)
+    def start_thread
       @thread ||= Thread.new do
         loop do
           sleep @timeout
@@ -70,7 +83,7 @@ module TinyDTLS
             if used
               [sess, !used]
             else # Not used since we've been here last time → free resources
-              sess.close(ctx)
+              sess.close(@context)
               nil
             end
           end
