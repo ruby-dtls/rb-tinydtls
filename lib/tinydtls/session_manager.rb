@@ -33,14 +33,16 @@ module TinyDTLS
       end
 
       key = addrinfo.getnameinfo
-      if @store.has_key? key
-        sess, _ = @store[key]
-      else
-        sess = Session.new(addrinfo)
-        @store[key] = [sess, true]
-      end
+      @mutex.synchronize do
+        if @store.has_key? key
+          sess, _ = @store[key]
+        else
+          sess = Session.new(addrinfo)
+          @store[key] = [sess, true]
+        end
 
-      @mutex.synchronize { f.call(sess) }
+        f.call(sess)
+      end
     end
 
     # Frees all ressources associated with this class.
