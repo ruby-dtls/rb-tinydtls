@@ -4,15 +4,27 @@ Ruby wrapper for [tinydtls][tinydtls homepage].
 
 # Status
 
-This rubygem is far from finished and not stable at all. It also
-currently requires a [patched version of tinydtls][tinydtls fork], even
-though that will (hopefully) change soon.
+This rubygem is far from finished and not stable at all. It currently
+also requires an unreleased version of the [tinydtls library][tinydtls
+homepage].
 
 # Installing
 
 The gem can easily be installed from [rubygems.org][rubygems] using:
 
 	$ gem install tinydtls
+
+Before the gem can actually be used [tinydtls][tinydtls homepage] needs
+to be build from the git repository using the following commands:
+
+	$ git clone https://git.eclipse.org/r/tinydtls/org.eclipse.tinydtls
+	$ cd org.eclipse.tinydtls
+	$ git checkout develop
+	$ autoconf && autoheader && ./configure
+	$ make && make install
+
+To verify that the gem actually works as expected run the test suite.
+Instructions for doing so are provided in the next section.
 
 # Tests
 
@@ -44,5 +56,4 @@ p s.recvfrom(1000)
 A simple DTLS client and DTLS echo server is available in `examples/`.
 
 [tinydtls homepage]: https://projects.eclipse.org/projects/iot.tinydtls
-[tinydtls fork]: https://github.com/ruby-dtls/tinydtls
 [rubygems]: https://rubygems.org/
