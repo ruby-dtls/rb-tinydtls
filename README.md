@@ -38,7 +38,7 @@ s = TinyDTLS::UDPSocket.new
 s.add_client("client identity", "very secret key")
 
 s.bind("localhost", 1337)
-puts s.recvfrom(1000)
+p s.recvfrom(1000)
 ```
 
 A simple DTLS client and DTLS echo server is available in `examples/`.
