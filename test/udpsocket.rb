@@ -6,10 +6,10 @@ class TestUDPSocket < Utility
 
     @server_socket = TinyDTLS::UDPSocket.new(TEST_AFAM)
     @server_socket.bind(TEST_HOST, TEST_SERVER_PORT)
-    @server_socket.add_client(TEST_PSK, TEST_ID)
+    @server_socket.add_client(TEST_ID, TEST_PSK)
 
     @client_socket = TinyDTLS::UDPSocket.new(TEST_AFAM, TEST_TIMEOUT)
-    @client_socket.add_client(TEST_PSK, TEST_ID)
+    @client_socket.add_client(TEST_ID, TEST_PSK)
   end
 
   def teardown
