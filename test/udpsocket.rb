@@ -103,6 +103,20 @@ class TestUDPSocket < Utility
       @server_socket.recvfrom_nonblock(exception: false)
   end
 
+  def test_add_client_default
+    s = TinyDTLS::UDPSocket.new(TEST_AFAM)
+    s.add_client("foobar", "barfoo")
+
+    s.add_client("barfoo", "foobar")
+    s.add_client(TEST_ID, TEST_PSK, true)
+
+    teststr = "something"
+    s.send(teststr, 0, TEST_HOST, TEST_SERVER_PORT)
+
+    assert_msg teststr, @server_socket.recvfrom
+    s.close
+  end
+
   def test_free_stale_peer
     @client_socket.send("foobar", 0, TEST_HOST, TEST_SERVER_PORT)
     assert_equal 1, get_client_sessions.size

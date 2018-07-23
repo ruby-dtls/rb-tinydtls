@@ -63,8 +63,17 @@ module TinyDTLS
       Wrapper::dtls_set_handler(@context.to_ffi, @handler)
     end
 
-    def add_client(id, key)
+    # Adds a new identity/key pair to the underlying
+    # TinyDTLS::SessionManager. By default the first pair added to the
+    # store will be used for establishing new handshakes, this behaviour
+    # can be changed using the optional default argument.
+    def add_client(id, key, default = false)
       @secconf.add_client(id, key)
+
+      if default
+        @secconf.default_id  = id
+        @secconf.default_key = key
+      end
     end
 
     def bind(host, port)
