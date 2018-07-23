@@ -8,6 +8,9 @@ module TinyDTLS
   #
   # Basic send and receive methods are implemented and should work.
   class UDPSocket < ::UDPSocket
+    # Maximum of times a dtls_send is retried.
+    MAX_RETRY = 5.freeze
+
     Write = Proc.new do |ctx, sess, buf, len|
       addrinfo = Session.addr_from_ptr(sess)
 
@@ -162,14 +165,19 @@ module TinyDTLS
       # be performed by it. We need to block here until the handshake
       # was completed.
       #
-      # The current approach is calling `Wrapper::dtls_write` until it
-      # succeeds which is suboptimal because it doesn't take into
-      # account that the handshake may fail.
-      until (res = dtls_send(addr, mesg)) > 0
+      # The current approach is calling `Wrapper::dtls_write` up to
+      # MAX_RETRY times. If we didn't manage to send our data to the
+      # peer after MAX_RETRY times an exception is raised.
+      MAX_RETRY.times do
+        res = dtls_send(addr, mesg)
+        if res > 0
+          return res
+        end
+
         sleep 1
       end
 
-      return res
+      raise Errno::ECONNREFUSED.new("DTLS handshake failed")
     end
 
     private

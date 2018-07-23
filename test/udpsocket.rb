@@ -114,7 +114,15 @@ class TestUDPSocket < Utility
     s.send(teststr, 0, TEST_HOST, TEST_SERVER_PORT)
 
     assert_msg teststr, @server_socket.recvfrom
-    s.close
+  end
+
+  def test_failed_handshake
+    s = TinyDTLS::UDPSocket.new(TEST_AFAM)
+    s.add_client(TEST_ID + TEST_ID, TEST_PSK)
+
+    assert_raises Errno::ECONNREFUSED do
+      s.send("123", 0, TEST_HOST, TEST_SERVER_PORT)
+    end
   end
 
   def test_free_stale_peer
