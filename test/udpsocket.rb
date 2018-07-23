@@ -137,6 +137,16 @@ class TestUDPSocket < Utility
     assert get_client_sessions.empty?
   end
 
+  def test_close_twice
+    # Previously a double-free was performed on #close occassionally
+    # causing a segmentation fault, just ensure that this doesn't happen
+    # again.
+
+    s = TinyDTLS::UDPSocket.new(TEST_AFAM)
+    s.close
+    s.close
+  end
+
   private
 
   def get_client_sessions

@@ -87,6 +87,11 @@ module TinyDTLS
     # TODO: close_{read,write}
 
     def close
+      # This method can't be called twice since we actually free memory
+      # allocated by ruby-ffi in this function. Since we can't free it
+      # twice we ensure that this function is only called once.
+      return unless CONTEXT_MAP.has_key? @context.key
+
       @sessions.close
       @thread.kill unless @thread.nil?
 
