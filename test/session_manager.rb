@@ -36,7 +36,7 @@ class TestSessionManager < Utility
     addrinfo = Addrinfo.getaddrinfo("www.ruby-lang.org", 443).first
     @sessions[addrinfo] { |s| nil }
 
-    sleep TEST_TIMEOUT * 2
+    sleep TEST_TIMEOUT * 3
     assert get_session_store.empty?
   end
 
