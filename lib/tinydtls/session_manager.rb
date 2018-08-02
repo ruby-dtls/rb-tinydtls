@@ -56,12 +56,10 @@ module TinyDTLS
     def close
       @mutex.synchronize do
         @thread.kill
-        @thread.join
-      end
-
-      @store.each_value do |value|
-        sess, _ = value
-        sess.close(@context)
+        @store.each_value do |value|
+          sess, _ = value
+          sess.close(@context)
+        end
       end
     end
 

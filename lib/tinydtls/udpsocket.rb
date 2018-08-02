@@ -93,7 +93,12 @@ module TinyDTLS
       return unless CONTEXT_MAP.has_key? @context.key
 
       @sessions.close
-      @thread.kill unless @thread.nil?
+      unless @thread.nil?
+        @thread.kill
+        while @thread.alive?
+          @thread.join
+        end
+      end
 
       # dtls_free_context sends messages to peers so we need to
       # explicitly free the dtls_context_t before closing the socket.
