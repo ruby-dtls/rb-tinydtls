@@ -110,7 +110,8 @@ module TinyDTLS
     end
 
     def connect(host, port)
-      @defaddr = Addrinfo.getaddrinfo(host, port, @family, :DGRAM).first
+      super
+      @defaddr = remote_address
     end
 
     def recvfrom(len = -1, flags = 0)
