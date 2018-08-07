@@ -141,9 +141,7 @@ module TinyDTLS
       return [pay, ary.last]
     end
 
-    # TODO: The recvmsg functions only implement a subset of the
-    # functionallity of the UDP socket class, e.g. they don't return
-    # ancillary data.
+    # TODO: The recvmsg function doesn't return ancillary data.
 
     def recvmsg(maxmesglen = nil, flags = 0, maxcontrollen = nil, opts = {})
       mesg, sender = recvfrom(maxmesglen.nil? ? -1 : maxmesglen, flags)

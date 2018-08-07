@@ -39,6 +39,16 @@ class TestUDPSocket < Utility
     assert_msg teststr, @server_socket.recvfrom
   end
 
+  def test_send_and_recvmsg
+    teststr = "hurr durr"
+
+    assert_equal teststr.bytesize,
+      @client_socket.send(teststr, 0, TEST_HOST, TEST_SERVER_PORT)
+
+    msg, _, _, _ = @server_socket.recvmsg
+    assert_equal teststr, msg # TODO: compare addrinfo
+  end
+
   def test_send_sockaddr_to
     teststr = "foo bar foo"
 
@@ -101,6 +111,12 @@ class TestUDPSocket < Utility
 
     assert_equal :wait_readable,
       @server_socket.recvfrom_nonblock(exception: false)
+  end
+
+  def test_recvmsg_nonblock_empty
+    assert_raises IO::EAGAINWaitReadable do
+      @server_socket.recvmsg_nonblock
+    end
   end
 
   def test_add_client_default
