@@ -117,14 +117,13 @@ module TinyDTLS
     end
 
     def recvfrom(len = -1, flags = 0)
-      ary = @queue.pop
-      return [byteslice(ary.first, len), ary.last]
+      msg, sender = @queue.pop
+      return [byteslice(msg, len), sender]
     end
 
     def recvfrom_nonblock(len = -1, flag = 0, outbuf = nil, exception: true)
-      ary = nil
       begin
-        ary = @queue.pop(true)
+        msg, sender = @queue.pop(true)
       rescue ThreadError
         if exception
           raise IO::EAGAINWaitReadable
@@ -133,12 +132,12 @@ module TinyDTLS
         end
       end
 
-      pay = byteslice(ary.first, len)
+      msg = byteslice(msg, len)
       unless outbuf.nil?
         outbuf << pay
       end
 
-      return [pay, ary.last]
+      return [msg, sender]
     end
 
     # TODO: The recvmsg function doesn't return ancillary data.
