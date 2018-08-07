@@ -45,8 +45,7 @@ class TestUDPSocket < Utility
     assert_equal teststr.bytesize,
       @client_socket.send(teststr, 0, TEST_HOST, TEST_SERVER_PORT)
 
-    msg, _, _, _ = @server_socket.recvmsg
-    assert_equal teststr, msg # TODO: compare addrinfo
+    assert_msg teststr, @server_socket.recvmsg
   end
 
   def test_send_sockaddr_to
