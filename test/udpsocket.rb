@@ -71,6 +71,12 @@ class TestUDPSocket < Utility
     assert_msg teststr, @server_socket.recvfrom
   end
 
+  def test_connect_unsupported_afamily
+    assert_raises SocketError do
+      @client_socket.connect("::1", TEST_SERVER_PORT)
+    end
+  end
+
   def test_send_missing_connect
     assert_raises Errno::EDESTADDRREQ do
       @client_socket.send("foobar", 0)

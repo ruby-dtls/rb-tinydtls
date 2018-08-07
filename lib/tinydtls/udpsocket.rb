@@ -110,8 +110,7 @@ module TinyDTLS
     end
 
     def connect(host, port)
-      @defhost = host
-      @defport = port
+      @defaddr = Addrinfo.getaddrinfo(host, port, @family, :DGRAM).first
     end
 
     def recvfrom(len = -1, flags = 0)
@@ -154,17 +153,16 @@ module TinyDTLS
       start_thread
 
       if host.nil? and port.nil?
-        if @defport.nil? or @defhost.nil?
+        if @defaddr.nil?
           raise Errno::EDESTADDRREQ
+        else
+          addr = @defaddr
         end
-
-        host = @defhost
-        port = @defport
       elsif port.nil? # host is not nil and must be a sockaddr_to
         port, host = Socket.unpack_sockaddr_in(host)
       end
 
-      addr = Addrinfo.getaddrinfo(host, port, @family, :DGRAM).first
+      addr ||= Addrinfo.getaddrinfo(host, port, @family, :DGRAM).first
 
       # If a new thread has been started above a new handshake needs to
       # be performed by it. We need to block here until the handshake
