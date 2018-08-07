@@ -53,7 +53,7 @@ s.bind("localhost", 1337)
 p s.recvfrom(1000)
 ```
 
-A simple DTLS client and DTLS echo server is available in `examples/`.
+A simple DTLS client and DTLS echo server are available in `examples/`.
 
 [tinydtls homepage]: https://projects.eclipse.org/projects/iot.tinydtls
 [rubygems]: https://rubygems.org/
