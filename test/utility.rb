@@ -47,8 +47,6 @@ class Utility < Minitest::Test
     assert !session.last
   end
 
-  private
-
   def af_to_i(af)
     case af
     when "AF_INET"

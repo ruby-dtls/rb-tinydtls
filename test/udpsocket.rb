@@ -18,16 +18,19 @@ class TestUDPSocket < Utility
   end
 
   def test_addr
-    assert_equal ["AF_INET", TEST_SERVER_PORT, TEST_IPADDR, TEST_IPADDR],
-      @server_socket.addr
+    addr = @server_socket.addr
+    addr[0] = af_to_i(addr[0])
+
+    assert_equal [TEST_AFAM, TEST_SERVER_PORT,
+                  TEST_IPADDR, TEST_IPADDR], addr
   end
 
   def test_addr_reverse_lookup
-    addrinfo = Socket.getaddrinfo(
-      TEST_HOST, TEST_SERVER_PORT, TEST_AFAM, :DGRAM,
-      0, 0, true).first
+    addr = @server_socket.addr(true)
+    addr[0] = af_to_i(addr[0])
 
-    assert_equal addrinfo[0..3], @server_socket.addr(true)
+    assert_equal [TEST_AFAM, TEST_SERVER_PORT,
+                  TEST_HOST, TEST_IPADDR], addr
   end
 
   def test_send_and_recvfrom
