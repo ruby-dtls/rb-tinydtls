@@ -18,19 +18,15 @@ class TestUDPSocket < Utility
   end
 
   def test_addr
-    addr = @server_socket.addr
-    addr[0] = af_to_i(addr[0])
-
-    assert_equal [TEST_AFAM, TEST_SERVER_PORT,
-                  TEST_IPADDR, TEST_IPADDR], addr
+    assert_server_addr @server_socket.addr
+    assert_server_addr @server_socket.addr(true), true
   end
 
-  def test_addr_reverse_lookup
-    addr = @server_socket.addr(true)
-    addr[0] = af_to_i(addr[0])
+  def test_peeraddr
+    @client_socket.connect(TEST_HOST, TEST_SERVER_PORT)
 
-    assert_equal [TEST_AFAM, TEST_SERVER_PORT,
-                  TEST_HOST, TEST_IPADDR], addr
+    assert_server_addr @client_socket.peeraddr
+    assert_server_addr @client_socket.peeraddr(true), true
   end
 
   def test_send_and_recvfrom
