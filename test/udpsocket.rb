@@ -13,8 +13,8 @@ class TestUDPSocket < Utility
   end
 
   def teardown
-    @server_socket.close
     @client_socket.close
+    @server_socket.close
   end
 
   def test_addr
