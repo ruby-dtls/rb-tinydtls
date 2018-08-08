@@ -100,7 +100,7 @@ class TestUDPSocket < Utility
     end
   end
 
-  def test_recv_with_maxlen
+  def test_recvfrom_with_maxlen
     teststr = "kartoffelsalat"
     @client_socket.send(teststr, 0, TEST_HOST, TEST_SERVER_PORT)
 
