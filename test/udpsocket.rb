@@ -117,6 +117,20 @@ class TestUDPSocket < Utility
       @server_socket.recvfrom_nonblock(exception: false)
   end
 
+  def test_recvfrom_nonblock_outbuf
+    teststr = "12345678"
+    outbuf  = String.new
+
+    @client_socket.send(teststr, 0, TEST_HOST, TEST_SERVER_PORT)
+    begin
+      @server_socket.recvfrom_nonblock(teststr.bytesize, 0, outbuf)
+    rescue IO::EAGAINWaitReadable
+      retry
+    end
+
+    assert_equal teststr, outbuf
+  end
+
   def test_recvmsg_nonblock_empty
     assert_raises IO::EAGAINWaitReadable do
       @server_socket.recvmsg_nonblock
