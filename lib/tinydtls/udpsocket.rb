@@ -132,7 +132,7 @@ module TinyDTLS
 
       msg = byteslice(msg, len)
       unless outbuf.nil?
-        outbuf << pay
+        outbuf << msg
       end
 
       return [msg, sender]
