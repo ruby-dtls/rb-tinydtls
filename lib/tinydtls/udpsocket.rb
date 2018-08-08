@@ -138,6 +138,20 @@ module TinyDTLS
       return [msg, sender]
     end
 
+    def recv(maxlen = -1, flags = 0, outbuf = nil)
+      msg, _ = recvfrom(maxlen, flags)
+      unless outbuf.nil?
+        outbuf << msg
+      end
+
+      return msg
+    end
+
+    def recv_nonblock(maxlen = -1, flags = 0, buf = nil, opts = {exception: true})
+      msg, _ = recvfrom_nonblock(maxlen, flags, buf, opts)
+      return msg
+    end
+
     # TODO: The recvmsg function doesn't return ancillary data.
 
     def recvmsg(maxmesglen = nil, flags = 0, maxcontrollen = nil, opts = {})

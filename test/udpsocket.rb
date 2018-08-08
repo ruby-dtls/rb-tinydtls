@@ -150,6 +150,25 @@ class TestUDPSocket < Utility
     end
   end
 
+  def test_recv
+    teststr = "wurstbrot"
+
+    @client_socket.send(teststr, 0, TEST_HOST, TEST_SERVER_PORT)
+    assert_equal teststr, @server_socket.recv
+  end
+
+  def test_recv_outbuf
+    teststr = "schinkensalami"
+    outbuf  = String.new
+
+    @client_socket.send(teststr, 0, TEST_HOST, TEST_SERVER_PORT)
+    @server_socket.recv(teststr.bytesize, 0, outbuf)
+
+    assert_equal teststr, outbuf
+  end
+
+  # TODO: tests for recv_nonblock
+
   def test_add_client_default
     s = TinyDTLS::UDPSocket.new(TEST_AFAM)
     s.add_client("foobar", "barfoo")
