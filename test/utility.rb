@@ -22,12 +22,7 @@ class Utility < Minitest::Test
     assert_equal exp_msg, msg
 
     if sender.is_a? Addrinfo
-      af, port, host, addr = [
-        sender.afamily,
-        sender.ip_port,
-        sender.getnameinfo.first,
-        sender.ip_address
-      ]
+      af, port, host, addr = to_ary(sender)
     else
       afstr, port, host, addr = sender
       af = af_to_i(afstr)
@@ -53,6 +48,17 @@ class Utility < Minitest::Test
 
   def assert_unused(session)
     assert !session.last
+  end
+
+  private
+
+  def to_ary(addrinfo)
+    [
+      addrinfo.afamily,
+      addrinfo.ip_port,
+      addrinfo.getnameinfo.first,
+      addrinfo.ip_address
+    ]
   end
 
   def af_to_i(af)
