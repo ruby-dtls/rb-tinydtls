@@ -198,6 +198,8 @@ module TinyDTLS
       raise Errno::ECONNREFUSED.new("DTLS handshake failed")
     end
 
+    # TODO: sendmsg{,_nonblock}
+
     private
 
     def to_addrinfo(*args)
