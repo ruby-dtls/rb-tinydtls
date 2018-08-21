@@ -29,6 +29,11 @@ class TestUDPSocket < Utility
     assert_server_addr @client_socket.peeraddr(true), true
   end
 
+  def test_remoteaddr
+    @client_socket.connect(TEST_HOST, TEST_SERVER_PORT)
+    assert_server_addr @client_socket.remote_address, true
+  end
+
   def test_send_and_recvfrom
     teststr = "foobar"
 
