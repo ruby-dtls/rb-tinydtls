@@ -35,7 +35,11 @@ class Utility < Minitest::Test
   end
 
   def assert_server_addr(addr, reverse = false)
-    addr[0] = af_to_i(addr[0])
+    if addr.is_a? Addrinfo
+      addr = to_ary(addr)
+    else
+      addr[0] = af_to_i(addr[0])
+    end
 
     saddr = reverse ? TEST_HOST : TEST_IPADDR
     assert_equal [TEST_AFAM, TEST_SERVER_PORT,
