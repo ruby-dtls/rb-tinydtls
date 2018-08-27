@@ -46,14 +46,6 @@ class Utility < Minitest::Test
                   saddr, TEST_IPADDR], addr
   end
 
-  def assert_used(session)
-    assert session.last
-  end
-
-  def assert_unused(session)
-    assert !session.last
-  end
-
   private
 
   def to_ary(addrinfo)

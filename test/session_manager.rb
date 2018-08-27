@@ -1,4 +1,4 @@
-class TestSessionManager < Utility
+class TestSessionManager
   TEST_TIMEOUT = 5.freeze
 
   def setup
@@ -41,6 +41,14 @@ class TestSessionManager < Utility
   end
 
   private
+
+  def assert_used(session)
+    assert session.last
+  end
+
+  def assert_unused(session)
+    assert !session.last
+  end
 
   def get_session_store
     @sessions.instance_variable_get("@store")
