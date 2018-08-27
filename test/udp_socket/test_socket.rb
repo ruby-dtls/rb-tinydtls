@@ -1,4 +1,6 @@
-class Utility < Minitest::Test
+class TestSocket < Minitest::Test
+  TEST_TIMEOUT = 5.freeze
+
   TEST_HOST = "localhost".freeze
   TEST_AFAM = Socket::AF_INET
   TEST_PSK  = "foobar".freeze
@@ -15,6 +17,18 @@ class Utility < Minitest::Test
 
   def setup
     TinyDTLS::Wrapper::dtls_set_log_level(TEST_LOG_LEVEL)
+
+    @server_socket = TinyDTLS::UDPSocket.new(TEST_AFAM)
+    @server_socket.bind(TEST_HOST, TEST_SERVER_PORT)
+    @server_socket.add_client(TEST_ID, TEST_PSK)
+
+    @client_socket = TinyDTLS::UDPSocket.new(TEST_AFAM, TEST_TIMEOUT)
+    @client_socket.add_client(TEST_ID, TEST_PSK)
+  end
+
+  def teardown
+    @client_socket.close
+    @server_socket.close
   end
 
   def assert_msg(exp_msg, args)
