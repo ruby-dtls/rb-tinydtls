@@ -6,7 +6,7 @@ require "tinydtls/context"
 require "tinydtls/session"
 require "tinydtls/security_conf"
 require "tinydtls/session_manager"
-require "tinydtls/udpsocket"
+require "tinydtls/udp_socket"
 
 module TinyDTLS
   # Map used to map `object_ids` passed as void pointers to the tinydtls
