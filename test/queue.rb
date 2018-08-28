@@ -10,6 +10,14 @@ class TestQueue < Minitest::Test
     assert_equal testobj, @queue.dequeue
   end
 
+  def test_enqueue_and_peek
+    testobj = "kartoffeln"
+
+    @queue.enqueue(testobj)
+    assert_equal testobj, @queue.peek
+    assert_equal testobj, @queue.dequeue
+  end
+
   def test_dequeue_non_blocking
     testobj = "erdbeerkäse"
 
@@ -30,6 +38,7 @@ class TestQueue < Minitest::Test
     end
 
     testobjs.each do |testobj|
+      assert_equal testobj, @queue.peek
       assert_equal testobj, @queue.dequeue
     end
   end
@@ -48,6 +57,12 @@ class TestQueue < Minitest::Test
   def test_dequeue_empty_non_blocking
     assert_raises ThreadError do
       @queue.dequeue(true)
+    end
+  end
+
+  def test_peek_empty_non_blocking
+    assert_raises ThreadError do
+      @queue.peek(true)
     end
   end
 end

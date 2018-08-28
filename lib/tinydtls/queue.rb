@@ -51,7 +51,18 @@ module TinyDTLS
       end
     end
 
-    # TODO: Implement peek
+    # Fetches an object at the head of queue, without removing it. If
+    # the queue is empty, the calling thread is suspended until data is
+    # pushed onto the queue. If `non_block` is true, the thread isn't
+    # suspended, and an exception is raised.
+    def peek(non_block = false)
+      acquire(non_block)
+
+      value = @head_lock.synchronize { @head.next.value }
+      @sema.release
+
+      value
+    end
 
     private
 
