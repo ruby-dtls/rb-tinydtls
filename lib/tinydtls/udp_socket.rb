@@ -30,7 +30,7 @@ module TinyDTLS
                                   :DGRAM, 0, 0, true).first
 
       ctxobj = TinyDTLS::Context.from_ptr(ctx)
-      ctxobj.queue.push([buf.read_string(len), sender])
+      ctxobj.queue.enqueue([buf.read_string(len), sender])
 
       # It is unclear to me why this callback even needs a return value,
       # the `tests/dtls-client.c` program in the tinydtls repository
@@ -115,13 +115,13 @@ module TinyDTLS
     end
 
     def recvfrom(len = -1, flags = 0)
-      msg, sender = @queue.pop
+      msg, sender = @queue.dequeue
       return [byteslice(msg, len), sender]
     end
 
     def recvfrom_nonblock(len = -1, flag = 0, outbuf = nil, exception: true)
       begin
-        msg, sender = @queue.pop(true)
+        msg, sender = @queue.dequeue(true)
       rescue ThreadError
         if exception
           raise IO::EAGAINWaitReadable

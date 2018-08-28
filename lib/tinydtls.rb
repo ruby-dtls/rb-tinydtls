@@ -1,6 +1,10 @@
+require "concurrent"
+
+require "thread"
 require "socket"
 require "ffi"
 
+require "tinydtls/queue"
 require "tinydtls/wrapper"
 require "tinydtls/context"
 require "tinydtls/session"

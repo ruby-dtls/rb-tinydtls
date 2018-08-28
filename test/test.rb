@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "socket"
 require "tinydtls"
 
+require_relative "./queue.rb"
 require_relative "./session.rb"
 require_relative "./security_conf.rb"
 require_relative "./session_manager.rb"
