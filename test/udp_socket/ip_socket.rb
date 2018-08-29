@@ -18,4 +18,26 @@ class TestIPSocket < TestSocket
     substr = teststr[0..8] # kartoffel
     assert_msg substr, @server_socket.recvfrom(substr.length)
   end
+
+  def test_recvfrom_peek
+    teststr = "schinkenwurst"
+    @client_socket.send(teststr, 0, TEST_HOST, TEST_SERVER_PORT)
+
+    assert_msg teststr, @server_socket
+      .recvfrom(teststr.bytesize, Socket::MSG_PEEK)
+    assert_msg teststr, @server_socket
+      .recvfrom(teststr.bytesize)
+  end
+
+  def test_recvfrom_peek_empty
+    teststr = "milchbrei"
+
+    Thread.new do
+      assert_msg teststr, @server_socket
+        .recvfrom(teststr.bytesize, Socket::MSG_PEEK)
+    end
+
+    sleep 1
+    @client_socket.send(teststr, 0, TEST_HOST, TEST_SERVER_PORT)
+  end
 end

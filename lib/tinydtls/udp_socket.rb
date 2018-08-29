@@ -115,13 +115,13 @@ module TinyDTLS
     end
 
     def recvfrom(len = -1, flags = 0)
-      msg, sender = @queue.dequeue
+      msg, sender = dequeue(flags)
       return [byteslice(msg, len), sender]
     end
 
     def recvfrom_nonblock(len = -1, flag = 0, outbuf = nil, exception: true)
       begin
-        msg, sender = @queue.dequeue(true)
+        msg, sender = dequeue(flag, true)
       rescue ThreadError
         if exception
           raise IO::EAGAINWaitReadable
@@ -209,6 +209,14 @@ module TinyDTLS
 
     def byteslice(str, len)
       return len >= 0 ? str.byteslice(0, len) : str
+    end
+
+    def dequeue(flags, non_block = false)
+      if flags & Socket::MSG_PEEK == Socket::MSG_PEEK
+        @queue.peek(non_block)
+      else
+        @queue.dequeue(non_block)
+      end
     end
 
     # Sends a dtls message to a specified address. It also takes care

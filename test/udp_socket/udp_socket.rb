@@ -43,6 +43,26 @@ class TestUDPSocket < TestSocket
     assert_msg teststr, msg
   end
 
+  def test_recvfrom_nonblock_peek_empty
+    assert_raises IO::EAGAINWaitReadable do
+      @server_socket.recvfrom_nonblock(2342, Socket::MSG_PEEK)
+    end
+  end
+
+  def test_recvfrom_nonblock_peek
+    teststr = "foobarbaz"
+
+    @client_socket.send(teststr, 0, TEST_HOST, TEST_SERVER_PORT)
+    begin
+      msg = @server_socket.recvfrom_nonblock(teststr.bytesize, Socket::MSG_PEEK)
+    rescue IO::EAGAINWaitReadable
+      retry
+    end
+
+    assert_msg teststr, msg
+    assert_msg teststr, @server_socket.recvfrom_nonblock
+  end
+
   def test_recvfrom_nonblock_outbuf
     teststr = "12345678"
     outbuf  = String.new
